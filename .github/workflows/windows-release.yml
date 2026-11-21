@@ -1,0 +1,32 @@
+name: Verify published Windows installer
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install the public release and verify a repeat setup
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $parent = Join-Path $env:RUNNER_TEMP 'Manager reports #1'
+          New-Item -ItemType Directory -Path $parent | Out-Null
+          & .\Install-iiko.ps1 -ParentDirectory $parent
+          $app = Join-Path $parent 'iiko-intelligence'
+          $db = Join-Path $app 'data\manager.sqlite'
+          $before = (Get-FileHash -LiteralPath $db).Hash
+          & .\Install-iiko.ps1 -ParentDirectory $parent
+          if ((Get-FileHash -LiteralPath $db).Hash -ne $before) { throw 'Repeat setup changed the dataset.' }
+          $result = & "$app\runtime\python.exe" -m iiko_intelligence.cli check-mcp
+          if ($LASTEXITCODE -ne 0) { throw 'MCP verification failed.' }
+          $status = ($result -join [Environment]::NewLine) | ConvertFrom-Json
+          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 8) { throw 'Unexpected MCP status.' }
+          Write-Output 'Native Windows install and repeat setup verified. Eight read-only tools available.'
