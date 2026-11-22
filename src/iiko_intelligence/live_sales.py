@@ -8,7 +8,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from .cloud_reports import CloudReports
 from .cloud_sales import (COLUMNS, DAY, DEPARTMENT, DISH_ID, DISH_NAME, ORDERS, QUANTITY, REPORT, SALES,
-                          _object_array, _windows, column_permissions, olap_request, require_columns)
+                          CloudHTTPError, _object_array, _windows, column_permissions, olap_request, require_columns)
 from .sales_snapshot import MAX_SALES_ROWS, SALES_DEFINITION, SalesRow, number_units, report_date, report_text
 from .service import MAX_RANGE_DAYS, _money, _parse_date, _quantity
 
@@ -70,17 +70,28 @@ class LiveSales:
     def __init__(self, api: CloudReports, department: str | None = None):
         self.api = api
         self.department = None if department is None else report_text(department, "outlet name")
-        self.columns = column_permissions(api.read(COLUMNS, {"reportType": "SALES"}))
-        flags = {DAY: ("canGroup", "canFilter"), SALES: ("canAggregate",)}
-        if self.department:
-            flags[DEPARTMENT] = ("canGroup", "canFilter")
-        require_columns(self.columns, flags)
-        self.with_orders = self.columns.get(ORDERS, {}).get("canAggregate") is True
+        try:
+            self.columns = column_permissions(api.read(COLUMNS, {"reportType": "SALES"}))
+        except CloudHTTPError as exc:
+            if exc.status != 503:
+                raise
+            # The report endpoint independently authorizes its own request.
+            self.columns = None
+        self.with_orders = False
+        if self.columns is not None:
+            flags = {DAY: ("canGroup", "canFilter"), SALES: ("canAggregate",)}
+            if self.department:
+                flags[DEPARTMENT] = ("canGroup", "canFilter")
+            require_columns(self.columns, flags)
+            self.with_orders = self.columns.get(ORDERS, {}).get("canAggregate") is True
 
     def context(self) -> dict:
-        return {"dataset_mode": "live", "restaurant": self.api.restaurant, "department": self.department,
-                "currency": self.api.currency, "checked_at": datetime.now(timezone.utc).isoformat(),
-                "date_field": DAY, "metric": METRIC, "metric_definition": SALES_DEFINITION}
+        result = {"dataset_mode": "live", "restaurant": self.api.restaurant, "department": self.department,
+                  "currency": self.api.currency, "checked_at": datetime.now(timezone.utc).isoformat(),
+                  "date_field": DAY, "metric": METRIC, "metric_definition": SALES_DEFINITION}
+        if self.columns is None:
+            result["report_note"] = "iiko returned HTTP 503 for its field list. The direct SALES report omits optional order counts."
+        return result
 
     def rows(self, window: Window, groups: list[str], measures: list[str]):
         request = olap_request(window.filter(), self.department, groups, measures)
@@ -120,7 +131,8 @@ class LiveSales:
                 "period": period.info(), "totals": totals, "by_day": daily}
 
     def dishes(self, period: Period) -> dict[str, Dish]:
-        require_columns(self.columns, {DISH_ID: ("canGroup",), DISH_NAME: ("canGroup",), QUANTITY: ("canAggregate",)})
+        if self.columns is not None:
+            require_columns(self.columns, {DISH_ID: ("canGroup",), DISH_NAME: ("canGroup",), QUANTITY: ("canAggregate",)})
         totals = defaultdict(int)
         seen = set()
         dishes = {}

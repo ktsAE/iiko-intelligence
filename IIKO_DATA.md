@@ -1,6 +1,6 @@
 # What the manager can ask
 
-v0.5.0 exposes 19 read-only MCP tools for one organization. A configured profile allows the connector to try each live report. The restaurant’s iiko permissions determine which calls succeed.
+v0.5.1 exposes 19 read-only MCP tools for one organization. A configured profile allows the connector to try each live report. The restaurant’s iiko permissions determine which calls succeed.
 
 | Question | Offline reports | Live MCP |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ v0.5.0 exposes 19 read-only MCP tools for one organization. A configured profile
 | What deliveries arrived? | `get_purchases` summarizes imported posted invoice headers. | `get_incoming_invoices` lists documents. `get_iiko_document` reads quantities, prices and VAT fields. |
 | What did we write off? | `get_writeoffs` summarizes imported posted act headers. | `get_writeoff_acts` lists documents. `get_iiko_document` reads product quantities and units. |
 
-Sales are the iiko «Сумма со скидкой» amount by «Учетный день». iiko resolves «вчера» at query time. Reports show the returned date and currency when supplied. An empty report has no verified amount. Order count and average order value require iiko’s unique order measure. Dish details are checked against each day’s total. A Cloud failure is reported to the manager.
+Sales are the iiko «Сумма со скидкой» amount by «Учетный день». iiko resolves «вчера» at query time. If iiko returns HTTP 503 for the field list, MCP requests the sales report directly with the same authorized organization, date and outlet filters. In that case the report omits optional order counts and average order value. Reports show the returned date and currency when supplied. An empty report has no verified amount. Order count and average order value require iiko’s unique order measure. Dish details are checked against each day’s total. A Cloud failure is reported to the manager.
 
 The manager can ask in Russian. The local MCP client picks the methods. For example, «Найди салат “Цезарь” и покажи его техкарту на 20 ноября», «Рассчитай стоимость закладки и единицы выхода по ценам склада “Кухня”», «Открой накладную № 0128 за неделю и покажи позиции». If a name matches several dishes or warehouses, choose the right one. For a date/time report, use the restaurant's UTC offset. Follow `next_offset` for subsequent rows. Check document status before counting posted activity. Directory names and units are current labels and can differ from historical labels.
 

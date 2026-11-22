@@ -4,7 +4,7 @@ iiko Intelligence gives one manager read-only reports on sales, dishes, stock, s
 
 ## Windows
 
-1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.5.0)
+1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.5.1)
 2. Open **Documents → iiko-intelligence** in local Codex and trust the project. Use this same folder for reports and updates. To check the connection, enter `/mcp` and look for `iiko_intelligence`.
 3. Run `Connect-iiko-Cloud.cmd` once to save the restaurant’s single-organization Cloud profile. Then ask **«Какая была выручка вчера?»** or **«Какие отчёты доступны онлайн?»**. The MCP reads sales directly from iiko and can check each reporting area.
 4. To work from an offline snapshot, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)

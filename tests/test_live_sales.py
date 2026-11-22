@@ -1,6 +1,7 @@
 from datetime import date
 from unittest import TestCase, IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 
 from mcp import Client
 
@@ -89,6 +90,42 @@ class Reporting(TestCase):
         result = sales.compare(FIRST, FIRST, SECOND, SECOND, 1)
         self.assertEqual((result["change"], result["other_dishes_change"], result["change_percent"],
                           result["overlap_days"]), ("90.00", "20.00", "69.23", 0))
+
+    def test_503_from_field_list_still_reads_a_scoped_live_report(self):
+        self.restaurant.responses[s.COLUMNS] = s.CloudHTTPError(s.COLUMNS, 503)
+        sales = LiveSales(self.restaurant.api(), "Кафе")
+        report = sales.summary("yesterday", "yesterday")
+        self.assertEqual(report["totals"], {"sales_after_discounts": "130.00"})
+        self.assertEqual(report["period"]["from"], FIRST)
+        self.assertIn("503", report["report_note"])
+        queries = [body for path, body in self.restaurant.calls if path == s.REPORT]
+        self.assertEqual(len(queries), 1)
+        self.assertEqual(queries[0]["aggregateFields"], [s.SALES])
+        self.assertEqual(queries[0]["filters"], [{"name": s.DAY, "filterType": "DateRange", "periodType": "YESTERDAY"},
+                                                 {"name": s.DEPARTMENT, "filterType": "IncludeValues", "values": ["Кафе"]}])
+        self.assertEqual(sales.top(FIRST, SECOND, "sales", 1)["rows"][0]["name"], "Суп")
+        self.assertEqual(sales.compare(FIRST, FIRST, SECOND, SECOND, 1)["change"], "90.00")
+        self.restaurant.data = {}
+        empty = sales.summary("yesterday", "yesterday")
+        self.assertEqual((empty["status"], empty["totals"]["sales_after_discounts"]), ("no_data", None))
+
+    def test_only_field_list_503_enables_direct_report(self):
+        for status in (401, 403, 429, 503):
+            with self.subTest(status=status), patch.object(s, "build_opener") as opener:
+                opener.return_value.open.side_effect = HTTPError("https://example.invalid", status, "", {}, None)
+                with self.assertRaises(s.CloudHTTPError) as caught:
+                    s._post(s.COLUMNS, {"reportType": "SALES"}, "fixture")
+                self.assertEqual(caught.exception.status, status)
+                self.restaurant.responses[s.COLUMNS] = caught.exception
+                if status != 503:
+                    with self.assertRaises(s.CloudHTTPError):
+                        LiveSales(self.restaurant.api()).summary("yesterday", "yesterday")
+                    self.assertFalse(any(path == s.REPORT for path, _ in self.restaurant.calls))
+
+        for status in (403, 503):
+            self.restaurant.responses[s.REPORT] = s.CloudHTTPError(s.REPORT, status)
+            with self.subTest(status=status), self.assertRaisesRegex(s.CloudHTTPError, s.REPORT + " "):
+                LiveSales(self.restaurant.api()).summary("yesterday", "yesterday")
 
     def test_missing_fields_do_not_hide_revenue(self):
         self.restaurant.columns = [s.SALES, s.DAY]
@@ -180,6 +217,14 @@ class Protocol(IsolatedAsyncioTestCase):
                 self.assertEqual(report["totals"]["orders"], 2)
                 access = await call("check_live_access", group="sales")
                 self.assertEqual(access["checks"]["get_top_dishes"]["status"], "ok")
+                upstream.responses[s.COLUMNS] = s.CloudHTTPError(s.COLUMNS, 503)
+                direct = await call("get_sales_summary", date_from="yesterday", date_to="yesterday")
+                self.assertEqual((direct["dataset_mode"], direct["totals"]), ("live", {"sales_after_discounts": "130.00"}))
+                upstream.responses[s.REPORT] = s.CloudHTTPError(s.REPORT, 503)
+                failed = await call("get_sales_summary", date_from="yesterday", date_to="yesterday")
+                self.assertEqual(failed["status"], "unavailable")
+                self.assertIn(s.REPORT + " (HTTP 503)", failed["reason"])
+                self.assertNotIn("totals", failed)
                 upstream.responses[s.REPORT] = ValueError("HTTP 403")
                 report = await call("get_sales_summary", date_from=FIRST, date_to=SECOND)
                 self.assertEqual((report["status"], report["reason"]), ("unavailable", "HTTP 403"))

@@ -27,6 +27,13 @@ SALES, ORDERS = "DishDiscountSumInt", "UniqOrderId"
 Post = Callable[[str, dict[str, Any], str | None], Any]
 
 
+class CloudHTTPError(ValueError):
+    def __init__(self, path: str, status: int):
+        self.status = status
+        hint = "service temporarily unavailable" if status == 503 else "check API access and report settings"
+        super().__init__(f"iiko Cloud rejected {path} (HTTP {status}); {hint}")
+
+
 class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None
@@ -44,7 +51,7 @@ def _post(path: str, payload: dict[str, Any], token: str | None) -> Any:
             raw = response.read(MAX_RESPONSE_BYTES + 1)
     except HTTPError as exc:
         exc.close()
-        raise ValueError(f"iiko Cloud rejected {path} (HTTP {exc.code}); check API access and report settings") from None
+        raise CloudHTTPError(path, exc.code) from None
     except (OSError, URLError, HTTPException):
         raise ValueError(f"could not reach iiko Cloud for {path}; check your network and retry") from None
     if len(raw) > MAX_RESPONSE_BYTES:
