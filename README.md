@@ -4,12 +4,18 @@ iiko Intelligence gives one manager read-only reports on sales, dishes, stock, s
 
 ## Windows
 
-For local v0.4.0 use the complete Windows ZIP shared with you. Run `Setup-iiko.cmd`, then `Connect-iiko-Cloud.cmd` for direct Cloud queries. The [public Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.3.1) distributes v0.3.1 with the original eight tools. See the [method-by-method coverage](IIKO_DATA.md) and [Windows instructions](WINDOWS.md).
+For local v0.4.1 use the complete Windows ZIP shared with you. Run `Setup-iiko.cmd`, then `Connect-iiko-Cloud.cmd` for direct Cloud queries. The [public Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.3.1) distributes v0.3.1 with the original eight tools. See the [method-by-method coverage](IIKO_DATA.md) and [Windows instructions](WINDOWS.md).
 
 1. Extract `iiko-intelligence-windows-x64.zip` into a folder you can write to. Double-click `Setup-iiko.cmd` and wait for **Setup verified**. The ZIP includes 64-bit Windows Python and the locked libraries. Setup runs offline.
 2. Open the extracted **iiko-intelligence** folder in **Codex → Local** in the ChatGPT desktop app. Trust the folder when prompted and enter `/mcp`. Look for `iiko_intelligence`.
 3. Ask “Use iiko Intelligence to check the data status, then summarize the top five dishes for September 2026.” The initial dataset is a demo.
 4. To switch to your sales, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
+
+### Updating the manager's connector
+
+Once the Windows build with automatic updates is installed, the running local MCP checks the latest stable release of `ktsAE/iiko-intelligence` daily. It checks the archive against GitHub's SHA-256, starts a candidate stdio server against the local read-only dataset and selects the new version only after verification. The next local session uses the selected version. Restaurant data and the encrypted profile remain in the original folder. Failed checks retry after 15 minutes while the MCP is running. The update check contacts GitHub with no restaurant credentials or report content.
+
+For an immediate check, ask local Codex **«Обнови iiko»**. Its project instructions run `runtime\python.exe -m iiko_intelligence.updates`. Update status is visible via `get_data_status`. The connector keeps installed code versions in `.iiko-updates`. Publish the normal `iiko-intelligence-windows-x64.zip` as a stable GitHub release asset with a matching `vX.Y.Z` tag to distribute a future update. Beta tags and prereleases are skipped. The [Windows guide](WINDOWS.md) covers the one-time move from a pre-updater version.
 
 ## Import an iikoOffice export
 

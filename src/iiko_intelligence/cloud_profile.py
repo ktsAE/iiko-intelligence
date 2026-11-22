@@ -92,4 +92,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from .updates import dispatch
+    dispatch("cloud_profile")
     main()

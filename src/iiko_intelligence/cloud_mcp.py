@@ -10,6 +10,7 @@ from pydantic import Field
 
 from .cloud_profile import configured, read_profile
 from .cloud_reports import CloudReports
+from .updates import with_update_notice
 
 LIVE_READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, open_world_hint=True)
 Limit = Annotated[int, Field(ge=1, le=100)]
@@ -26,6 +27,10 @@ def cloud_status() -> dict:
 
 
 def live(report: Callable[[CloudReports], dict]) -> dict[str, Any]:
+    return with_update_notice(_read_live(report))
+
+
+def _read_live(report: Callable[[CloudReports], dict]) -> dict[str, Any]:
     try:
         profile = read_profile()
         if profile is None:

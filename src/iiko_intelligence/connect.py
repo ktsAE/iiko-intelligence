@@ -28,7 +28,9 @@ def _server_parameters(database: Path) -> dict[str, Any]:
 
 
 async def _verify_connection(database: Path) -> dict[str, Any]:
-    async with Client(StdioServerParameters(**_server_parameters(database)), read_timeout_seconds=10) as client:
+    params = _server_parameters(database)
+    params["env"]["IIKO_NO_UPDATE_CHECK"] = "1"
+    async with Client(StdioServerParameters(**params), read_timeout_seconds=10) as client:
         tools = await client.list_tools()
         result = await client.call_tool("get_data_status", {})
         if result.is_error or not isinstance(result.structured_content, dict):
@@ -89,7 +91,10 @@ def setup_local() -> dict[str, Any]:
     settings.parent.mkdir(parents=True, exist_ok=True)
     with write_lock(settings):
         current = settings.read_text(encoding="utf-8") if settings.exists() else ""
-        updated = _updated_settings(current, _server_parameters(database))
+        parameters = _server_parameters(database)
+        if config.CODE_ROOT != config.PROJECT_ROOT:
+            parameters["command"] = str(config.PROJECT_ROOT / "runtime/python.exe")
+        updated = _updated_settings(current, parameters)
         if updated != current:
             with NamedTemporaryFile("w", encoding="utf-8", newline="\n", delete=False, dir=settings.parent) as file:
                 file.write(updated)

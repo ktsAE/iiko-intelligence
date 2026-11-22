@@ -28,5 +28,5 @@ jobs:
           $result = & "$app\runtime\python.exe" -m iiko_intelligence.cli check-mcp
           if ($LASTEXITCODE -ne 0) { throw 'MCP verification failed.' }
           $status = ($result -join [Environment]::NewLine) | ConvertFrom-Json
-          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 8) { throw 'Unexpected MCP status.' }
-          Write-Output 'Native Windows install and repeat setup verified. Eight read-only tools available.'
+          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 18) { throw 'Unexpected MCP status.' }
+          Write-Output 'Native Windows install and repeat setup verified. Eighteen read-only tools available.'

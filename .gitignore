@@ -18,3 +18,5 @@ data/
 *.xlsx
 *.xls
 !tests/fixtures/sales-legacy.xls
+
+.iiko-updates/

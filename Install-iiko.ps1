@@ -7,7 +7,7 @@ if ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64BitOperatingSystem) {
 }
 
 $ownerRepo = 'ktsAE/iiko-intelligence'
-$tag = 'v0.3.1'
+$tag = 'v0.4.1'
 $archiveName = 'iiko-intelligence-windows-x64.zip'
 $parent = (Get-Item -LiteralPath $ParentDirectory).FullName
 $destination = Join-Path $parent 'iiko-intelligence'

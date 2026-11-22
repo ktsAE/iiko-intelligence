@@ -1,6 +1,7 @@
 """Exercise the shipped Windows programs under Wine with disposable synthetic reports."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -43,6 +44,61 @@ async def verify():
             report = await call(tool, date_from='2026-08-01', date_to='2026-08-31')
             assert report['totals'] == {'documents': 1, 'document_amount': amount}
             assert report['granularity'] == 'document' and report['rows'][0]['number'] == '0003'
+asyncio.run(verify())
+"""
+
+
+def newer_release_fixture(work: Path, original: str) -> str:
+    # Generate a newer package locally so the update can be exercised with networking disabled.
+    from zipfile import ZIP_DEFLATED
+    major, minor, patch = original.split(".")
+    new = f"{major}.{minor}.{int(patch) + 1}"
+    source = work / "next.zip"
+    with ZipFile(ARCHIVE) as old, ZipFile(source, "w", ZIP_DEFLATED) as upcoming:
+        for info in old.infolist():
+            data = old.read(info)
+            if info.filename in ("iiko-intelligence/pyproject.toml", "iiko-intelligence/src/iiko_intelligence/__init__.py"):
+                data = data.replace(f'"{original}"'.encode(), f'"{new}"'.encode())
+            upcoming.writestr(info, data)
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    asset = "iiko-intelligence-windows-x64.zip"
+    url = f"https://github.com/ktsAE/iiko-intelligence/releases/download/v{new}/{asset}"
+    (work / "latest.json").write_text(json.dumps({"draft": False, "prerelease": False, "tag_name": "v" + new,
+        "assets": [{"name": asset, "size": source.stat().st_size, "digest": "sha256:" + digest,
+                    "browser_download_url": url}]}), encoding="utf-8")
+    return new
+
+
+UPDATE = """
+from pathlib import Path
+from iiko_intelligence import __version__, updates
+root = Path.cwd()
+def local_response(request, **kwargs):
+    if getattr(request, 'full_url', None) == updates.LATEST:
+        return (root.parent / 'latest.json').open('rb')
+    return (root.parent / 'next.zip').open('rb')
+out = updates.refresh(root, 'v' + __version__, force=True,
+                      fetch=lambda: updates.latest_release(local_response),
+                      retrieve=lambda release, archive: updates.download(release, archive, local_response))
+assert out['status'] == 'ready', out
+assert updates.update_status()['status'] == 'restart_required'
+"""
+
+VERIFY_UPDATED = """
+import asyncio, sys, tomllib
+from pathlib import Path
+from mcp import Client
+from mcp.client.stdio import StdioServerParameters
+async def verify():
+    settings = tomllib.loads(Path('.codex/config.toml').read_text(encoding='utf8'))['mcp_servers']['iiko_intelligence']
+    settings['env']['IIKO_NO_UPDATE_CHECK'] = '1'
+    async with Client(StdioServerParameters(**settings), read_timeout_seconds=25) as client:
+        reply = await client.call_tool('get_data_status', {})
+        assert not reply.is_error
+        status = reply.structured_content
+        assert status['software_update']['running'] == 'v' + sys.argv[1], status['software_update']
+        assert status['live_cloud']['status'] == 'configured'
+        assert status['reconciliation']['iiko_report_total'] == '110.50'
 asyncio.run(verify())
 """
 
@@ -120,13 +176,24 @@ def main() -> None:
             "save_profile(p); assert b'private-fixture' not in PROFILE.read_bytes(); assert read_profile()==p"
         )
         run(r"runtime\python.exe", "-c", profile_check)
+        original = run(r"runtime\python.exe", "-c", "from iiko_intelligence import __version__; print(__version__)").strip()
+        new = newer_release_fixture(work, original)
+        protected = [app / name for name in ("data/manager.sqlite", "data/cloud-profile.dpapi", ".codex/config.toml")] + [report]
+        before = [path.read_bytes() for path in protected]
+        (work / "stage_update.py").write_text(UPDATE, encoding="utf-8")
+        run(r"runtime\python.exe", r"..\stage_update.py")
+        (work / "verify_update.py").write_text(VERIFY_UPDATED, encoding="utf-8")
+        run(r"runtime\python.exe", r"..\verify_update.py", new)
+        assert cli("check-mcp")["dataset_mode"] != "synthetic"
+        assert "Setup verified" in cmd("Setup-iiko.cmd", "/quiet")
+        assert before == [path.read_bytes() for path in protected]
         run(r"runtime\python.exe", "-m", "iiko_intelligence.cloud_profile", "--disconnect")
         assert not (app / "data/cloud-profile.dpapi").exists()
         fixture_tests = work / "test_cloud_reports.py"
         shutil.copy(ROOT / "tests/test_cloud_reports.py", fixture_tests)
         run(r"runtime\python.exe", "-m", "unittest", "discover", "-s", "..", "-p", fixture_tests.name)
         subprocess.run(["wineserver", "-w"], cwd=app, env=env, timeout=45, check=True)
-    print("Windows ZIP passed setup, three file formats, stock, documents, failed import, repeat setup, text report and MCP checks.")
+    print("Windows ZIP passed setup, three file formats, stock, documents, failed import, repeat setup, text report, staged self-update, preserved profile and MCP checks.")
 
 
 if __name__ == "__main__":
