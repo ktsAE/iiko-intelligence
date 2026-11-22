@@ -267,13 +267,14 @@ wheels = [
 
 [[package]]
 name = "iiko-intelligence-trial"
-version = "0.3.1"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },
     { name = "mcp" },
     { name = "openpyxl" },
     { name = "pydantic" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "xlrd" },
 ]
 
@@ -283,6 +284,7 @@ requires-dist = [
     { name = "mcp", specifier = "==2.3.0" },
     { name = "openpyxl", specifier = "==3.1.5" },
     { name = "pydantic", specifier = ">=2,<3" },
+    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = "==312" },
     { name = "xlrd", specifier = "==2.0.2" },
 ]
 

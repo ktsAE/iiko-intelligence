@@ -4,7 +4,7 @@ iiko Intelligence gives one manager read-only reports on sales, dishes, stock, s
 
 ## Windows
 
-Use the [Windows release and installer](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.3.1) or paste the [Russian installation prompt](INSTALL.md) into local Codex on the manager’s laptop. See [iiko data coverage](IIKO_DATA.md) for the reports included and additional API options.
+For local v0.4.0 use the complete Windows ZIP shared with you. Run `Setup-iiko.cmd`, then `Connect-iiko-Cloud.cmd` for direct Cloud queries. The [public Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.3.1) distributes v0.3.1 with the original eight tools. See the [method-by-method coverage](IIKO_DATA.md) and [Windows instructions](WINDOWS.md).
 
 1. Extract `iiko-intelligence-windows-x64.zip` into a folder you can write to. Double-click `Setup-iiko.cmd` and wait for **Setup verified**. The ZIP includes 64-bit Windows Python and the locked libraries. Setup runs offline.
 2. Open the extracted **iiko-intelligence** folder in **Codex → Local** in the ChatGPT desktop app. Trust the folder when prompted and enter `/mcp`. Look for `iiko_intelligence`.
@@ -25,7 +25,7 @@ In iikoOffice, create a **Sales OLAP report** for one outlet and a closed period
 
 Keep the raw file outside the folder you open in Codex. When prompted, enter the source period and the matching iikoOffice total. The import replaces the prior snapshot only if the detail rows add up to that total exactly. To compare two weeks, export a single period covering both. [Example column layout](examples/sales-example.csv)
 
-Use `compare_sales_periods` to compare two ranges covered by the same sales export. It returns each period’s length, days with records, amount and percentage change, and the dishes contributing most to the difference. Dish rankings support revenue and quantity. Refund and tax treatment follows the source report. The Cloud collector can include order count. Recipe costs are available only in the demo.
+Use `compare_sales_periods` to compare two ranges covered by the same sales export. It returns each period’s length, days with records, amount and percentage change, and the dishes contributing most to the difference. Dish rankings support revenue and quantity. Refund and tax treatment follows the source report. The Cloud collector can include order count. The snapshot only has recipe costs in demo mode. The separate Cloud recipe-cost tool uses the effective recipe and warehouse prices.
 
 ## Warehouse balances
 

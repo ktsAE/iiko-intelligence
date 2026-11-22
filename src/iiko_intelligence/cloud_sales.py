@@ -10,6 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 from uuid import UUID
 
+from .cloud_paths import LIVE_READ_PATHS
 from .sales_snapshot import MAX_SALES_ROWS, SalesPeriod, SalesRow, number_units, report_date, report_text
 
 
@@ -31,7 +32,7 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def _post(path: str, payload: dict[str, Any], token: str | None) -> Any:
-    if path not in {TOKEN, ORGANIZATIONS, COLUMNS, REPORT}:
+    if path not in {TOKEN, ORGANIZATIONS, COLUMNS, REPORT} and path not in LIVE_READ_PATHS:
         raise ValueError("unsupported iiko Cloud operation")
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if token:
@@ -108,10 +109,7 @@ def _scoped_day(row: dict[str, Any], start: date, end: date, department: str) ->
     return day
 
 
-def fetch_cloud_sales(
-    period: SalesPeriod, organization: str, department: str, credentials: dict[str, str], *, post: Post = _post,
-) -> tuple[list[SalesRow], dict[date, int] | None]:
-    department = report_text(department, "iiko outlet name")
+def organization_token(organization: str, credentials: dict[str, str], *, post: Post = _post) -> str:
     try:
         organization = str(UUID(organization))
     except ValueError:
@@ -124,6 +122,14 @@ def fetch_cloud_sales(
                                   "organizations", "organization list")
     if len(organizations) != 1 or organizations[0].get("id") != organization:
         raise ValueError("use a key whose organization list contains only the configured iiko organization")
+    return token
+
+
+def fetch_cloud_sales(
+    period: SalesPeriod, organization: str, department: str, credentials: dict[str, str], *, post: Post = _post,
+) -> tuple[list[SalesRow], dict[date, int] | None]:
+    department = report_text(department, "iiko outlet name")
+    token = organization_token(organization, credentials, post=post)
     with_orders = _check_columns(post(COLUMNS, {"reportType": "SALES"}, token))
 
     sales: list[SalesRow] = []

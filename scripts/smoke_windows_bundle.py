@@ -23,11 +23,13 @@ async def verify():
     params = tomllib.loads(Path('.codex/config.toml').read_text(encoding='utf-8'))['mcp_servers']['iiko_intelligence']
     async with Client(StdioServerParameters(**params), read_timeout_seconds=15) as client:
         listing = await client.list_tools()
-        assert len(listing.tools) == 8 and all(t.annotations.read_only_hint for t in listing.tools)
+        assert len(listing.tools) == 18 and all(t.annotations.read_only_hint for t in listing.tools)
         async def call(name, **args):
             reply = await client.call_tool(name, args)
             assert not reply.is_error, reply
             return reply.structured_content
+        recipe = await call('get_recipe_card', product_id='00000000-0000-4000-8000-000000000001', as_of='2026-09-01')
+        assert recipe['status'] == 'not_configured'
         status = await call('get_data_status')
         assert status['restaurant']['name'] == 'Кафе' and status['stock_snapshot']['passed']
         assert status['reconciliation']['iiko_report_total'] == '110.50'
@@ -110,6 +112,19 @@ def main() -> None:
         assert all(s in body for s in ("Кафе", "110.50", "Обед", "Кухня", "590.00", "2026-08-31", "90.20", "Акты списания"))
         (work / "verify.py").write_text(VERIFY, encoding="utf-8")
         run(r"runtime\python.exe", r"..\verify.py")
+        # Use only fixture credentials for the current Windows-user encryption round trip.
+        profile_check = (
+            "from iiko_intelligence.cloud_profile import PROFILE, validated, save_profile, read_profile; "
+            "p=validated('00000000-0000-4000-8000-000000000001', "
+            "{'appId':'example','clientSecret':'private-fixture','apiKey':'test-key'}); "
+            "save_profile(p); assert b'private-fixture' not in PROFILE.read_bytes(); assert read_profile()==p"
+        )
+        run(r"runtime\python.exe", "-c", profile_check)
+        run(r"runtime\python.exe", "-m", "iiko_intelligence.cloud_profile", "--disconnect")
+        assert not (app / "data/cloud-profile.dpapi").exists()
+        fixture_tests = work / "test_cloud_reports.py"
+        shutil.copy(ROOT / "tests/test_cloud_reports.py", fixture_tests)
+        run(r"runtime\python.exe", "-m", "unittest", "discover", "-s", "..", "-p", fixture_tests.name)
         subprocess.run(["wineserver", "-w"], cwd=app, env=env, timeout=45, check=True)
     print("Windows ZIP passed setup, three file formats, stock, documents, failed import, repeat setup, text report and MCP checks.")
 
