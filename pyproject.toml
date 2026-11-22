@@ -4,11 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "iiko-intelligence-trial"
-version = "0.4.1"
+version = "0.4.2"
 description = "Read-only iiko reporting for one restaurant manager"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
 dependencies = [
+  "cryptography==50.0.2",
   "defusedxml==0.7.1",
   "mcp==2.3.0",
   "openpyxl==3.1.5",
@@ -29,4 +30,4 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.iiko]
-update_layout = 1
+update_layout = 2

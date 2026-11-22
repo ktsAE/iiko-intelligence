@@ -45,7 +45,7 @@ def main() -> None:
                 if (file.is_file() and relative.parts[0] not in {"bin", "Scripts", ".lock"}
                         and "__pycache__" not in relative.parts and file.suffix != ".pyc"):
                     bundle.write(file, package + "runtime/Lib/site-packages/" + relative.as_posix())
-            for name in ("README.md", "WINDOWS.md", "IIKO_DATA.md",
+            for name in ("README.md", "WINDOWS.md", "INSTALL.md", "IIKO_DATA.md",
                          "pyproject.toml", "uv.lock", "examples/sales-example.csv",
                          "examples/stock-template.csv", "examples/purchases-template.csv",
                          "examples/writeoffs-template.csv"):
@@ -59,6 +59,7 @@ def main() -> None:
             for file in sorted((ROOT / "windows").glob("*.cmd")):
                 bundle.writestr(package + file.name, file.read_text(encoding="ascii").replace("\n", "\r\n"))
         archive.replace(OUTPUT)
+        OUTPUT.with_suffix(".zip.sig").unlink(missing_ok=True)
     digest = hashlib.sha256(OUTPUT.read_bytes()).hexdigest()
     (OUTPUT.parent / "SHA256SUMS.txt").write_text(f"{digest}  {OUTPUT.name}\n", encoding="ascii")
     print(f"{OUTPUT}\nsha256 {digest}")

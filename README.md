@@ -4,18 +4,19 @@ iiko Intelligence gives one manager read-only reports on sales, dishes, stock, s
 
 ## Windows
 
-For local v0.4.1 use the complete Windows ZIP shared with you. Run `Setup-iiko.cmd`, then `Connect-iiko-Cloud.cmd` for direct Cloud queries. The [public Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.3.1) distributes v0.3.1 with the original eight tools. See the [method-by-method coverage](IIKO_DATA.md) and [Windows instructions](WINDOWS.md).
+For local v0.4.2 use the trusted PowerShell bootstrap and signed Windows package. The public release is currently v0.3.1. [Installation](INSTALL.md) · [Report coverage](IIKO_DATA.md) · [Windows guide in Russian](WINDOWS.md)
 
-1. Extract `iiko-intelligence-windows-x64.zip` into a folder you can write to. Double-click `Setup-iiko.cmd` and wait for **Setup verified**. The ZIP includes 64-bit Windows Python and the locked libraries. Setup runs offline.
+1. Ask local Codex to verify the bootstrap's SHA-256 against the value Aleksandr supplies separately and run it. The bootstrap verifies the publisher signature before installing the runtime. It can use the ZIP and its detached signature from the supplied local folder.
+
 2. Open the extracted **iiko-intelligence** folder in **Codex → Local** in the ChatGPT desktop app. Trust the folder when prompted and enter `/mcp`. Look for `iiko_intelligence`.
 3. Ask “Use iiko Intelligence to check the data status, then summarize the top five dishes for September 2026.” The initial dataset is a demo.
 4. To switch to your sales, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
 
 ### Updating the manager's connector
 
-Once the Windows build with automatic updates is installed, the running local MCP checks the latest stable release of `ktsAE/iiko-intelligence` daily. It checks the archive against GitHub's SHA-256, starts a candidate stdio server against the local read-only dataset and selects the new version only after verification. The next local session uses the selected version. Restaurant data and the encrypted profile remain in the original folder. Failed checks retry after 15 minutes while the MCP is running. The update check contacts GitHub with no restaurant credentials or report content.
+While the Windows project is open, the connector checks stable GitHub releases daily and accepts only immutable releases for updates. **«Обнови iiko»** asks local Codex to check immediately. Both installation and update require an RSA-3072/SHA-256 signature from the pinned publisher key. The signed record binds the repository, version, Windows asset name, size, archive digest and installed-file digest. The candidate MCP runs a synthetic health check with a disposable profile and a limited environment. The launcher verifies the selected files on each new launch. The ordinary manager workflow keeps its reports and credentials in the original project.
 
-For an immediate check, ask local Codex **«Обнови iiko»**. Its project instructions run `runtime\python.exe -m iiko_intelligence.updates`. Update status is visible via `get_data_status`. The connector keeps installed code versions in `.iiko-updates`. Publish the normal `iiko-intelligence-windows-x64.zip` as a stable GitHub release asset with a matching `vX.Y.Z` tag to distribute a future update. Beta tags and prereleases are skipped. The [Windows guide](WINDOWS.md) covers the one-time move from a pre-updater version.
+The signing key belongs on the publisher's trusted machine or offline storage. It has no role on the manager's laptop or in GitHub Actions. Build and test reviewed source. On the signing machine run `uv run --locked python scripts/sign_windows_release.py --key /path/to/private/publisher-v1.pem`. Attach the ZIP, its `.zip.sig` and `Install-iiko.ps1` to a draft GitHub release. Publish after verification. Immutable releases lock their attached assets. Share the bootstrap digest separately for first installation and keep a secure backup of the private key. A signing-key loss or compromise calls for a fresh trusted bootstrap. Windows file permissions on the original trusted installation and the security of the user's account still matter.
 
 ## Import an iikoOffice export
 
@@ -91,11 +92,12 @@ The local command for a tunnel profile on Linux looks like this. Use absolute pa
 
 ## Development
 
-The release smoke test requires Wine on Linux. It creates its own temporary Windows prefix and exercises the generated ZIP. To run it with external networking disabled on a Linux host with user namespaces, use `unshare -Urn sh -c 'ip link set lo up && exec .venv/bin/python scripts/smoke_windows_bundle.py'` after building.
+The release smoke test requires Wine on Linux. It creates its own temporary Windows prefix and exercises the generated ZIP. To run it with external networking disabled on a Linux host with user namespaces, use `unshare -Urn sh -c 'ip link set lo up && exec .venv/bin/python scripts/smoke_windows_bundle.py'` after signing the reviewed build.
 
 ```sh
 uv run --locked python -m unittest discover -s tests -v
 uv run --locked python scripts/build_windows_bundle.py
+uv run --locked python scripts/sign_windows_release.py --key /path/to/private/publisher-v1.pem
 uv run --locked python scripts/smoke_windows_bundle.py
 ```
 

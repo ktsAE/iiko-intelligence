@@ -29,6 +29,7 @@ def _server_parameters(database: Path) -> dict[str, Any]:
 
 async def _verify_connection(database: Path) -> dict[str, Any]:
     params = _server_parameters(database)
+    params["args"] = ["-B", *params["args"]]
     params["env"]["IIKO_NO_UPDATE_CHECK"] = "1"
     async with Client(StdioServerParameters(**params), read_timeout_seconds=10) as client:
         tools = await client.list_tools()

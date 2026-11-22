@@ -1,6 +1,7 @@
 """Exercise the shipped Windows programs under Wine with disposable synthetic reports."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -11,6 +12,9 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from openpyxl import Workbook
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from iiko_intelligence import release_trust as trust
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = ROOT / "dist/iiko-intelligence-windows-x64.zip"
@@ -54,18 +58,31 @@ def newer_release_fixture(work: Path, original: str) -> str:
     major, minor, patch = original.split(".")
     new = f"{major}.{minor}.{int(patch) + 1}"
     source = work / "next.zip"
+    key = rsa.generate_private_key(public_exponent=65537, key_size=3072)
+    test_pin = base64.b64encode(key.public_key().public_numbers().n.to_bytes(384, "big"))
+    anchor_name = "iiko-intelligence/src/iiko_intelligence/release_trust.py"
+    anchor = work / anchor_name
+    anchor.write_bytes(anchor.read_bytes().replace(trust.MODULUS.encode(), test_pin))
+    for cache in (anchor.parent / "__pycache__").glob("release_trust.*.pyc"):
+        cache.unlink()
     with ZipFile(ARCHIVE) as old, ZipFile(source, "w", ZIP_DEFLATED) as upcoming:
         for info in old.infolist():
             data = old.read(info)
             if info.filename in ("iiko-intelligence/pyproject.toml", "iiko-intelligence/src/iiko_intelligence/__init__.py"):
                 data = data.replace(f'"{original}"'.encode(), f'"{new}"'.encode())
+            if info.filename == anchor_name:
+                data = data.replace(trust.MODULUS.encode(), test_pin)
             upcoming.writestr(info, data)
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     asset = "iiko-intelligence-windows-x64.zip"
     url = f"https://github.com/ktsAE/iiko-intelligence/releases/download/v{new}/{asset}"
-    (work / "latest.json").write_text(json.dumps({"draft": False, "prerelease": False, "tag_name": "v" + new,
-        "assets": [{"name": asset, "size": source.stat().st_size, "digest": "sha256:" + digest,
-                    "browser_download_url": url}]}), encoding="utf-8")
+    message = trust.Release("v" + new, source.stat().st_size, digest, trust.archive_tree(source)).message()
+    raw = message + base64.b64encode(key.sign(message, padding.PKCS1v15(), hashes.SHA256())) + b"\n"
+    (work / "next.sig").write_bytes(raw)
+    (work / "latest.json").write_text(json.dumps({"draft": False, "prerelease": False, "immutable": True, "tag_name": "v" + new,
+        "assets": [{"name": asset, "size": source.stat().st_size, "digest": "sha256:" + digest, "browser_download_url": url},
+                   {"name": trust.SIGNATURE, "size": len(raw), "digest": "sha256:" + hashlib.sha256(raw).hexdigest(),
+                    "browser_download_url": url + ".sig"}]}), encoding="utf-8")
     return new
 
 
@@ -76,6 +93,8 @@ root = Path.cwd()
 def local_response(request, **kwargs):
     if getattr(request, 'full_url', None) == updates.LATEST:
         return (root.parent / 'latest.json').open('rb')
+    if request.endswith('.sig'):
+        return (root.parent / 'next.sig').open('rb')
     return (root.parent / 'next.zip').open('rb')
 out = updates.refresh(root, 'v' + __version__, force=True,
                       fetch=lambda: updates.latest_release(local_response),
@@ -97,6 +116,8 @@ async def verify():
         assert not reply.is_error
         status = reply.structured_content
         assert status['software_update']['running'] == 'v' + sys.argv[1], status['software_update']
+        if len(sys.argv) > 2:
+            assert status['software_update']['status'] == 'installed_files_rejected', status['software_update']
         assert status['live_cloud']['status'] == 'configured'
         assert status['reconciliation']['iiko_report_total'] == '110.50'
 asyncio.run(verify())
@@ -107,6 +128,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="iiko win #") as tmp:
         work = Path(tmp)
         app = work / "iiko-intelligence"
+        from iiko_intelligence import __version__
+        signed = trust.verify_receipt(ARCHIVE.with_name(trust.SIGNATURE).read_bytes(), "v" + __version__)
+        with ARCHIVE.open("rb") as stream:
+            assert trust.file_hash(stream) == signed.sha256 and ARCHIVE.stat().st_size == signed.size
         with ZipFile(ARCHIVE) as archive:
             assert archive.testzip() is None
             assert not any(name.startswith(("iiko-intelligence/data/", "iiko-intelligence/.codex/")) for name in archive.namelist())
@@ -186,6 +211,10 @@ def main() -> None:
         run(r"runtime\python.exe", r"..\verify_update.py", new)
         assert cli("check-mcp")["dataset_mode"] != "synthetic"
         assert "Setup verified" in cmd("Setup-iiko.cmd", "/quiet")
+        assert before == [path.read_bytes() for path in protected]
+        changed_file = app / ".iiko-updates" / ("v" + new) / "README.md"
+        changed_file.write_text("modified fixture", encoding="utf-8")
+        run(r"runtime\python.exe", r"..\verify_update.py", original, "rejected")
         assert before == [path.read_bytes() for path in protected]
         run(r"runtime\python.exe", "-m", "iiko_intelligence.cloud_profile", "--disconnect")
         assert not (app / "data/cloud-profile.dpapi").exists()

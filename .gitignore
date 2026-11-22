@@ -20,3 +20,5 @@ data/
 !tests/fixtures/sales-legacy.xls
 
 .iiko-updates/
+
+publisher-v1.pem
