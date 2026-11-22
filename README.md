@@ -1,13 +1,13 @@
 # iiko Intelligence
 
-iiko Intelligence gives one manager read-only reports on sales, dishes, stock, supplier invoices and write-offs. Use them in local Codex in the ChatGPT desktop app, or create a text report for an ordinary chat. Start with the demo and refresh from iikoOffice exports or a supported iiko Cloud sales reporting key.
+iiko Intelligence gives one manager read-only reports on sales, dishes, stock, supplier invoices and write-offs. Use them in local Codex in the ChatGPT desktop app, or create a text report for an ordinary chat. Connect a supported iiko Cloud reporting profile for live answers or load an iikoOffice export for offline reports.
 
 ## Windows
 
-1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.4.2)
+1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.5.0)
 2. Open **Documents → iiko-intelligence** in local Codex and trust the project. Use this same folder for reports and updates. To check the connection, enter `/mcp` and look for `iiko_intelligence`.
-3. Ask “Use iiko Intelligence to check the data status, then summarize the top five dishes for September 2026.” The initial dataset is a demo.
-4. To switch to your sales, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
+3. Run `Connect-iiko-Cloud.cmd` once to save the restaurant’s single-organization Cloud profile. Then ask **«Какая была выручка вчера?»** or **«Какие отчёты доступны онлайн?»**. The MCP reads sales directly from iiko and can check each reporting area.
+4. To work from an offline snapshot, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
 
 ### Updating the manager's connector
 
@@ -29,7 +29,7 @@ In iikoOffice, create a **Sales OLAP report** for one outlet and a closed period
 
 Keep the raw file outside the folder you open in Codex. When prompted, enter the source period and the matching iikoOffice total. The import replaces the prior snapshot only if the detail rows add up to that total exactly. To compare two weeks, export a single period covering both. [Example column layout](examples/sales-example.csv)
 
-Use `compare_sales_periods` to compare two ranges covered by the same sales export. It returns each period’s length, days with records, amount and percentage change, and the dishes contributing most to the difference. Dish rankings support revenue and quantity. Refund and tax treatment follows the source report. The Cloud collector can include order count. The snapshot only has recipe costs in demo mode. The separate Cloud recipe-cost tool uses the effective recipe and warehouse prices.
+For offline comparisons use `compare_sales_periods` with `source="snapshot"` and two ranges covered by the same export. It returns each period’s length, days with records, amount and percentage change, and the dishes contributing most to the difference. Dish rankings support revenue and quantity. Refund and tax treatment follows the source report. The Cloud collector can include order count. The snapshot only has recipe costs in demo mode. The separate Cloud recipe-cost tool uses the effective recipe and warehouse prices.
 
 ## Warehouse balances
 

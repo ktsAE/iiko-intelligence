@@ -16,6 +16,7 @@ from iiko_intelligence.seed import seed_demo
 EXPECTED_TOOLS = {
     "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_live_stock", "get_recipe_cost",
     "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document",
+    "check_live_access",
     "compare_sales_periods",
     "get_capabilities",
     "get_data_status",

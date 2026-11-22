@@ -10,7 +10,9 @@ from mcp_types import ToolAnnotations
 from pydantic import Field
 
 from . import __version__
-from .cloud_mcp import cloud_status, register_cloud_tools
+from . import cloud_mcp
+from .cloud_mcp import LIVE_READ, cloud_status, register_cloud_tools
+from .live_sales import RELATIVE, LiveSales
 from .config import database_path
 from .manager_reports import compare_periods
 from .sales_snapshot import open_reports
@@ -19,8 +21,10 @@ from .updates import start_checks, update_status, with_update_notice
 
 
 INSTRUCTIONS = (
-    "Check data status and coverage before answering. Label synthetic data as demo and "
-    "iiko sales as a snapshot with its dates. Stock has its own warehouse and as-of date. "
+    "For restaurant figures use live reports when Cloud is configured. For yesterday or today pass the same "
+    "English word as both sales dates. Label the source, organization, dates and currency from the result. "
+    "Use get_live_stock, get_incoming_invoices and get_writeoff_acts for current warehouse questions. "
+    "Use check_live_access for online access checks. Label imported and demo reports explicitly. "
     "When comparing periods, mention missing days or unequal lengths. Explain unavailable metrics without treating them as zero. "
     "For direct iiko requests use the live Cloud tools. Each live result identifies its organization. "
     "Keep local snapshot and Cloud figures separate unless the manager confirms their scopes match. "
@@ -53,7 +57,8 @@ def get_capabilities() -> dict[str, Any]:
         result["software_update"] = update_status()
         result["live_cloud"] = {
             **cloud_status(),
-            "methods": ["find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_recipe_cost",
+            "methods": ["check_live_access", "get_sales_summary", "get_top_dishes", "compare_sales_periods",
+                        "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_recipe_cost",
                         "get_live_stock", "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document"],
         }
         result["tools"]["live_iiko"] = result["live_cloud"]["status"]
@@ -70,32 +75,55 @@ def get_data_status() -> dict[str, Any]:
         return {**service.data_status(), "live_cloud": cloud_status(), "software_update": update_status()}
 
 
+SalesSource = Literal["auto", "live", "snapshot"]
+
+
+def use_live(source: SalesSource, department: str | None, *dates: str) -> bool:
+    if source == "snapshot" and (department is not None or any(v.lower() in RELATIVE for v in dates)):
+        raise ValueError("For an imported report use its explicit dates and its recorded outlet.")
+    return source == "live" or (source == "auto" and (
+        department is not None or any(v.lower() in RELATIVE for v in dates) or cloud_mcp.configured()))
+
+
 @server.tool(
     name="get_sales_summary",
-    description="Get sales for an inclusive range (YYYY-MM-DD) and metrics supported by the current dataset.",
-    annotations=READ_ONLY,
+    description="Read revenue after discounts and available order counts. Use yesterday or today as both dates "
+                "for the iiko accounting day, or inclusive YYYY-MM-DD dates. Auto uses configured Cloud. "
+                "Optional department is an exact outlet name. Choose snapshot for an imported report.",
+    annotations=LIVE_READ,
 )
-def get_sales_summary(date_from: str, date_to: str) -> dict[str, Any]:
+def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto",
+                      department: str | None = None) -> dict[str, Any]:
+    if use_live(source, department, date_from, date_to):
+        return cloud_mcp.live(lambda api: LiveSales(api, department).summary(date_from, date_to))
     with open_reports(database_path()) as service:
         return with_update_notice(service.sales_summary(date_from, date_to))
 
 
 @server.tool(
     name="get_top_dishes",
-    description="Get dishes ranked by sales or quantity for an inclusive date range (YYYY-MM-DD).",
-    annotations=READ_ONLY,
+    description="Rank dishes by sales or quantity. Auto uses configured Cloud. Use yesterday or today for both dates "
+                "or inclusive YYYY-MM-DD dates. Live dish amounts must reconcile with the daily sales report.",
+    annotations=LIVE_READ,
 )
 def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
-                   rank_by: Literal["sales", "quantity"] = "sales") -> dict[str, Any]:
+                   rank_by: Literal["sales", "quantity"] = "sales", source: SalesSource = "auto",
+                   department: str | None = None) -> dict[str, Any]:
+    if use_live(source, department, date_from, date_to):
+        return cloud_mcp.live(lambda api: LiveSales(api, department).top(date_from, date_to, rank_by, limit))
     with open_reports(database_path()) as service:
         return with_update_notice(service.top_dishes(date_from, date_to, limit=limit, rank_by=rank_by))
 
 
-@server.tool(name="compare_sales_periods", annotations=READ_ONLY,
-             description="Compare two inclusive periods in one snapshot. Show sales change and dishes with the "
+@server.tool(name="compare_sales_periods", annotations=LIVE_READ,
+             description="Compare two inclusive periods from the configured Cloud or a requested snapshot. Show sales change and dishes with the "
                          "largest absolute contributions. Check period lengths and days with data.")
 def compare_sales_periods(baseline_from: str, baseline_to: str, current_from: str, current_to: str,
-                          limit: RowLimit = 10) -> dict[str, Any]:
+                          limit: RowLimit = 10, source: SalesSource = "auto",
+                          department: str | None = None) -> dict[str, Any]:
+    dates = baseline_from, baseline_to, current_from, current_to
+    if use_live(source, department, *dates):
+        return cloud_mcp.live(lambda api: LiveSales(api, department).compare(*dates, limit))
     return with_update_notice(compare_periods(database_path(), baseline_from, baseline_to, current_from, current_to, limit=limit))
 
 

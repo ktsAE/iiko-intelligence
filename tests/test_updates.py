@@ -19,6 +19,10 @@ class UpdateTests(unittest.TestCase):
     tag = "v0.5.0"
 
     def setUp(self):
+        # Exercise an upgrade from a fixed installed version, independently of the checkout version.
+        installed_version = patch.object(updates, "__version__", "0.4.2")
+        installed_version.start()
+        self.addCleanup(installed_version.stop)
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)

@@ -76,5 +76,7 @@ jobs:
           $result = & "$app\runtime\python.exe" -m iiko_intelligence.cli check-mcp
           if ($LASTEXITCODE -ne 0) { throw 'MCP verification failed.' }
           $status = ($result -join [Environment]::NewLine) | ConvertFrom-Json
-          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 18) { throw 'Unexpected MCP status.' }
-          Write-Output 'Native Windows install and repeat setup verified. Eighteen read-only tools available.'
+          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 19) { throw 'Unexpected MCP status.' }
+          & "$app\runtime\python.exe" -m unittest discover -s "$env:GITHUB_WORKSPACE\tests" -p test_live_sales.py
+          if ($LASTEXITCODE -ne 0) { throw 'Live reporting fixture tests failed in the installed runtime.' }
+          Write-Output 'Windows install, repeat setup, 19 read-only tools and live reporting fixtures verified.'

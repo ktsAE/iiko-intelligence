@@ -28,13 +28,15 @@ async def verify():
     params = tomllib.loads(Path('.codex/config.toml').read_text(encoding='utf-8'))['mcp_servers']['iiko_intelligence']
     async with Client(StdioServerParameters(**params), read_timeout_seconds=15) as client:
         listing = await client.list_tools()
-        assert len(listing.tools) == 18 and all(t.annotations.read_only_hint for t in listing.tools)
+        assert len(listing.tools) == 19 and all(t.annotations.read_only_hint for t in listing.tools)
         async def call(name, **args):
             reply = await client.call_tool(name, args)
             assert not reply.is_error, reply
             return reply.structured_content
         recipe = await call('get_recipe_card', product_id='00000000-0000-4000-8000-000000000001', as_of='2026-09-01')
         assert recipe['status'] == 'not_configured'
+        for tool, args in [('check_live_access', {}), ('get_sales_summary', {'date_from':'yesterday', 'date_to':'yesterday'})]:
+            assert (await call(tool, **args))['status'] == 'not_configured'
         status = await call('get_data_status')
         assert status['restaurant']['name'] == 'Кафе' and status['stock_snapshot']['passed']
         assert status['reconciliation']['iiko_report_total'] == '110.50'

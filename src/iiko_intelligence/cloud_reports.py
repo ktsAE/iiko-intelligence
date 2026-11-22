@@ -9,7 +9,7 @@ from uuid import UUID
 
 from . import cloud_paths as paths
 from .cloud_profile import Profile
-from .cloud_sales import Post, _object_array, _objects, _post, organization_token
+from .cloud_sales import Post, _object_array, _objects, _post, organization_session
 
 
 def selected(row: dict, fields: str) -> dict:
@@ -76,7 +76,9 @@ class CloudReports:
     def __init__(self, profile: Profile, post: Post = _post):
         self.org = profile.organization
         self.post = post
-        self.token = organization_token(self.org, profile.credentials, post=post)
+        self.token, details = organization_session(self.org, profile.credentials, post=post, extended=True)
+        self.restaurant = selected(details, "id name")
+        self.currency = details.get("currencyIsoName") or None
 
     def read(self, path: str, payload: dict) -> Any:
         return self.post(path, payload, self.token)

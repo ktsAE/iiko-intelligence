@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterator
 from datetime import date, timedelta
 from decimal import Decimal
+from http.client import HTTPException
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
@@ -44,7 +45,7 @@ def _post(path: str, payload: dict[str, Any], token: str | None) -> Any:
     except HTTPError as exc:
         exc.close()
         raise ValueError(f"iiko Cloud rejected {path} (HTTP {exc.code}); check API access and report settings") from None
-    except (OSError, URLError):
+    except (OSError, URLError, HTTPException):
         raise ValueError(f"could not reach iiko Cloud for {path}; check your network and retry") from None
     if len(raw) > MAX_RESPONSE_BYTES:
         raise ValueError("iiko Cloud response exceeded the limit; use a shorter period")
@@ -64,18 +65,25 @@ def _object_array(response: object, field: str, label: str) -> list[dict[str, An
     return _objects(response.get(field) if isinstance(response, dict) else None, label)
 
 
+def column_permissions(response: object) -> dict:
+    return {row["name"]: row for row in _objects(response, "OLAP column list") if isinstance(row.get("name"), str)}
+
+
+def require_columns(columns: dict, flags: dict) -> None:
+    unsupported = [name for name, required in flags.items()
+                   if any(columns.get(name, {}).get(flag) is not True for flag in required)]
+    if unsupported:
+        raise ValueError("the iiko Cloud key lacks required OLAP fields: " + ", ".join(unsupported))
+
+
 def _check_columns(response: object) -> bool:
     flags = {
         DAY: ("canGroup", "canFilter"), DEPARTMENT: ("canGroup", "canFilter"),
         DISH_ID: ("canGroup",), DISH_NAME: ("canGroup",), QUANTITY: ("canAggregate",),
         SALES: ("canAggregate",),
     }
-    columns = {row.get("name"): row for row in _objects(response, "OLAP column list")
-               if isinstance(row.get("name"), str)}
-    unsupported = [name for name, required in flags.items()
-                   if any(columns.get(name, {}).get(flag) is not True for flag in required)]
-    if unsupported:
-        raise ValueError("the iiko Cloud key lacks required OLAP fields: " + ", ".join(unsupported))
+    columns = column_permissions(response)
+    require_columns(columns, flags)
     return columns.get(ORDERS, {}).get("canAggregate") is True
 
 
@@ -90,16 +98,19 @@ def _windows(start: date, end: date) -> Iterator[tuple[date, date]]:
 
 def _request(start: date, end: date, department: str, *, by_dish: bool, with_orders: bool = False) -> dict[str, Any]:
     daily_fields = [ORDERS, SALES] if with_orders else [SALES]
-    return {
-        "reportType": "SALES", "buildSummary": False,
-        "groupByRowFields": [DAY, DEPARTMENT, DISH_ID, DISH_NAME] if by_dish else [DAY, DEPARTMENT],
-        "aggregateFields": [QUANTITY, SALES] if by_dish else daily_fields,
-        "filters": [
-            {"name": DAY, "filterType": "DateRange", "periodType": "CUSTOM",
-             "from": start.isoformat(), "to": end.isoformat(), "includeLow": True, "includeHigh": True},
-            {"name": DEPARTMENT, "filterType": "IncludeValues", "values": [department]},
-        ],
-    }
+    return olap_request({"periodType": "CUSTOM", "from": start.isoformat(), "to": end.isoformat(),
+                         "includeLow": True, "includeHigh": True}, department,
+                        [DISH_ID, DISH_NAME] if by_dish else [], [QUANTITY, SALES] if by_dish else daily_fields)
+
+
+def olap_request(period: dict, department: str | None, groups: list[str], measures: list[str]) -> dict:
+    filters = [{"name": DAY, "filterType": "DateRange", **period}]
+    dimensions = [DAY]
+    if department is not None:
+        filters.append({"name": DEPARTMENT, "filterType": "IncludeValues", "values": [department]})
+        dimensions.append(DEPARTMENT)
+    return {"reportType": "SALES", "buildSummary": False, "groupByRowFields": dimensions + groups,
+            "aggregateFields": measures, "filters": filters}
 
 
 def _scoped_day(row: dict[str, Any], start: date, end: date, department: str) -> date:
@@ -109,7 +120,8 @@ def _scoped_day(row: dict[str, Any], start: date, end: date, department: str) ->
     return day
 
 
-def organization_token(organization: str, credentials: dict[str, str], *, post: Post = _post) -> str:
+def organization_session(organization: str, credentials: dict[str, str], *, post: Post = _post,
+                         extended: bool = False) -> tuple[str, dict]:
     try:
         organization = str(UUID(organization))
     except ValueError:
@@ -118,10 +130,18 @@ def organization_token(organization: str, credentials: dict[str, str], *, post: 
     token = response.get("token") if isinstance(response, dict) else None
     if not isinstance(token, str) or not token or not token.isascii() or not token.isprintable():
         raise ValueError("iiko Cloud did not return a usable access token")
-    organizations = _object_array(post(ORGANIZATIONS, {"includeDisabled": True}, token),
+    scope = {"includeDisabled": True}
+    if extended:
+        scope["returnAdditionalInfo"] = True
+    organizations = _object_array(post(ORGANIZATIONS, scope, token),
                                   "organizations", "organization list")
     if len(organizations) != 1 or organizations[0].get("id") != organization:
         raise ValueError("use a key whose organization list contains only the configured iiko organization")
+    return token, organizations[0]
+
+
+def organization_token(organization: str, credentials: dict[str, str], *, post: Post = _post) -> str:
+    token, _ = organization_session(organization, credentials, post=post)
     return token
 
 
