@@ -4,11 +4,8 @@ iiko Intelligence gives one manager read-only reports on sales, dishes, stock, s
 
 ## Windows
 
-For local v0.4.2 use the trusted PowerShell bootstrap and signed Windows package. The public release is currently v0.3.1. [Installation](INSTALL.md) · [Report coverage](IIKO_DATA.md) · [Windows guide in Russian](WINDOWS.md)
-
-1. Ask local Codex to verify the bootstrap's SHA-256 against the value Aleksandr supplies separately and run it. The bootstrap verifies the publisher signature before installing the runtime. It can use the ZIP and its detached signature from the supplied local folder.
-
-2. Open the extracted **iiko-intelligence** folder in **Codex → Local** in the ChatGPT desktop app. Trust the folder when prompted and enter `/mcp`. Look for `iiko_intelligence`.
+1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.4.2)
+2. Open **Documents → iiko-intelligence** in local Codex and trust the project. Use this same folder for reports and updates. To check the connection, enter `/mcp` and look for `iiko_intelligence`.
 3. Ask “Use iiko Intelligence to check the data status, then summarize the top five dishes for September 2026.” The initial dataset is a demo.
 4. To switch to your sales, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
 

@@ -1,8 +1,8 @@
 # What the manager can ask
 
-The public Windows release v0.3.1 offers eight MCP tools. The local Windows build v0.4.2 also offers ten tools that read from the Russian iiko Cloud API. Use `get_data_status` to check the local snapshot and Cloud configuration separately. A configured profile identifies an organization. Each API method needs permission at that restaurant.
+Windows v0.4.2 includes the eight MCP tools from v0.3.1 and ten additional tools that read from the Russian iiko Cloud API. Use `get_data_status` to check the local snapshot and Cloud configuration separately. A configured profile identifies an organization. Each API method needs permission at that restaurant.
 
-| Question | Public v0.3.1 | Additional MCP methods in local v0.4.2 |
+| Question | Available in v0.3.1 | Additional MCP methods in v0.4.2 |
 | --- | --- | --- |
 | What data do we have? | `get_capabilities`, `get_data_status` | Both also report Cloud configuration. |
 | What sold and which dishes explain a change? | `get_sales_summary`, `get_top_dishes`, `compare_sales_periods` on a local snapshot | The existing sales collector can refresh the snapshot when run separately. |

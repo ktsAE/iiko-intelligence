@@ -3,6 +3,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      draft_tag:
+        description: Optional signed draft tag to test before publication
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -13,17 +18,39 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Install the public release and verify a repeat setup
+      - name: Fetch the signed draft assets
+        if: inputs.draft_tag != ''
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRAFT_TAG: ${{ inputs.draft_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:DRAFT_TAG -cnotmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected a version tag.' }
+          $kit = Join-Path $env:RUNNER_TEMP 'signed-kit'
+          gh release download $env:DRAFT_TAG --dir $kit --pattern 'iiko-intelligence-windows-x64.zip*' --pattern 'Install-iiko.ps1'
+          if ($LASTEXITCODE -ne 0) { throw 'Draft download failed.' }
+          $published = (Get-Content -LiteralPath (Join-Path $kit 'Install-iiko.ps1') -Raw).Replace("`r`n", "`n")
+          $trusted = (Get-Content -LiteralPath .\Install-iiko.ps1 -Raw).Replace("`r`n", "`n")
+          if ($published -cne $trusted) { throw 'Installer differs from checked-out source.' }
+      - name: Install the signed release and verify a repeat setup
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $parent = Join-Path $env:RUNNER_TEMP 'Manager reports #1'
           New-Item -ItemType Directory -Path $parent | Out-Null
-          & .\Install-iiko.ps1 -ParentDirectory $parent
+          $options = @{ ParentDirectory = $parent }
+          $installer = '.\Install-iiko.ps1'
+          $kit = Join-Path $env:RUNNER_TEMP 'signed-kit'
+          if (Test-Path -LiteralPath $kit) {
+            $options['PackageDirectory'] = $kit
+            $installer = Join-Path $kit 'Install-iiko.ps1'
+          }
+          & $installer @options
           $app = Join-Path $parent 'iiko-intelligence'
           $db = Join-Path $app 'data\manager.sqlite'
           $before = (Get-FileHash -LiteralPath $db).Hash
-          & .\Install-iiko.ps1 -ParentDirectory $parent
+          & $installer @options
           if ((Get-FileHash -LiteralPath $db).Hash -ne $before) { throw 'Repeat setup changed the dataset.' }
           $result = & "$app\runtime\python.exe" -m iiko_intelligence.cli check-mcp
           if ($LASTEXITCODE -ne 0) { throw 'MCP verification failed.' }

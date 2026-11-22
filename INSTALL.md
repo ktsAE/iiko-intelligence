@@ -1,18 +1,18 @@
-# Installing the first signed version
+# Install on Windows from GitHub
 
-Version 0.4.2 establishes the publisher key on the manager's Windows laptop. For the first installation, obtain the bootstrap script or its SHA-256 from Aleksandr through a separate trusted channel. A digest supplied alongside an untrusted download cannot establish who published it.
+Send the manager the prompt below through your usual trusted chat. Include the installer's SHA-256 in that message. She can paste it into local Codex on her Windows laptop. The installer fetches the signed package and creates the project in her Windows Documents folder.
 
-In local Codex on Windows, open the parent folder and give it the expected bootstrap SHA-256 from Aleksandr's message:
+> Установи iiko Intelligence из релиза ktsAE/iiko-intelligence v0.4.2 на GitHub. Скачай установщик из https://github.com/ktsAE/iiko-intelligence/releases/download/v0.4.2/Install-iiko.ps1 во временную папку. Проверь SHA-256 по значению из моего сообщения. При несовпадении остановись. После проверки запусти установщик с параметром `-ParentDirectory ([Environment]::GetFolderPath('MyDocuments'))`. Проверь MCP и покажи полный путь к проекту. Если там уже есть другая установка, сохрани её и её данные.
 
-> Установи подписанную версию iiko Intelligence в новую папку. Проверь SHA-256 файла Install-iiko.ps1 по значению из моего сообщения, затем запусти этот установщик. Пакет и подпись находятся рядом с ним. Проверь подключение MCP и покажи, какую папку открыть.
+Publisher reference for this release's `Install-iiko.ps1`:
 
-For a local kit, compare the bootstrap hash with `Get-FileHash -Algorithm SHA256 -LiteralPath .\Install-iiko.ps1`. After it matches, run the verified script from the kit folder:
-
-```powershell
-.\Install-iiko.ps1 -PackageDirectory . -ParentDirectory "$env:USERPROFILE\Documents"
+```text
+154f7625f2fc9c46c88a06e3d6d60e9e821709483064afb1fe8f76ad5d1c9f79
 ```
 
-The parent must exist. The script reads `iiko-intelligence-windows-x64.zip` and its matching `.zip.sig`. Once the signed release is published, omitting `-PackageDirectory` fetches these assets from the pinned GitHub release. Add `-VerifyOnly` for verification without installation. The bootstrap validates the independent publisher signature and the entire ZIP before extracting or executing the package. Open the resulting `iiko-intelligence` project in local Codex. Use `get_data_status` to verify the running version.
+Open **Documents → iiko-intelligence** in local Codex and trust this project. Windows may display Documents as **Документы** or redirect it to OneDrive. The installer prints its exact location. The first session uses demo data. Ask **«Проверь подключение к iiko и покажи, какие данные доступны»**.
+
+For an offline installation, supply the ZIP and detached signature next to the verified installer and pass `-PackageDirectory .` from that folder. In both modes the installer checks the publisher signature before it extracts or runs the package.
 
 ## Moving from an unsigned version
 
