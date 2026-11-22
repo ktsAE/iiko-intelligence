@@ -13,26 +13,44 @@ permissions:
   contents: read
 
 jobs:
-  install:
-    runs-on: windows-latest
-    timeout-minutes: 10
+  draft_assets:
+    if: github.event_name == 'workflow_dispatch' && inputs.draft_tag != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # GitHub restricts draft release listings to callers with push access.
+    # This job only transfers files. It never checks out or runs the project.
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Fetch the signed draft assets
-        if: inputs.draft_tag != ''
-        shell: powershell
+      - name: Download the three signed installation files
         env:
           GH_TOKEN: ${{ github.token }}
           DRAFT_TAG: ${{ inputs.draft_tag }}
         run: |
-          $ErrorActionPreference = 'Stop'
-          if ($env:DRAFT_TAG -cnotmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') { throw 'Expected a version tag.' }
-          $kit = Join-Path $env:RUNNER_TEMP 'signed-kit'
-          gh release download $env:DRAFT_TAG --dir $kit --pattern 'iiko-intelligence-windows-x64.zip*' --pattern 'Install-iiko.ps1'
-          if ($LASTEXITCODE -ne 0) { throw 'Draft download failed.' }
-          $published = (Get-Content -LiteralPath (Join-Path $kit 'Install-iiko.ps1') -Raw).Replace("`r`n", "`n")
-          $trusted = (Get-Content -LiteralPath .\Install-iiko.ps1 -Raw).Replace("`r`n", "`n")
-          if ($published -cne $trusted) { throw 'Installer differs from checked-out source.' }
+          [[ "$DRAFT_TAG" =~ ^v[0-9]+[.][0-9]+[.][0-9]+$ ]] || exit 1
+          gh release download "$DRAFT_TAG" --repo "$GITHUB_REPOSITORY" --dir signed-kit \
+            --pattern 'Install-iiko.ps1' --pattern 'iiko-intelligence-windows-x64.zip' --pattern 'iiko-intelligence-windows-x64.zip.sig'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed-kit
+          path: signed-kit/*
+          if-no-files-found: error
+          retention-days: 1
+
+  install:
+    needs: draft_assets
+    if: ${{ !cancelled() && (needs.draft_assets.result == 'success' || needs.draft_assets.result == 'skipped') }}
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: inputs.draft_tag != ''
+        with:
+          name: signed-kit
+          path: ${{ runner.temp }}/signed-kit
       - name: Install the signed release and verify a repeat setup
         shell: powershell
         run: |
@@ -45,6 +63,9 @@ jobs:
           if (Test-Path -LiteralPath $kit) {
             $options['PackageDirectory'] = $kit
             $installer = Join-Path $kit 'Install-iiko.ps1'
+            $downloaded = (Get-Content -LiteralPath $installer -Raw).Replace("`r`n", "`n")
+            $trusted = (Get-Content -LiteralPath .\Install-iiko.ps1 -Raw).Replace("`r`n", "`n")
+            if ($downloaded -cne $trusted) { throw 'Installer differs from checked-out source.' }
           }
           & $installer @options
           $app = Join-Path $parent 'iiko-intelligence'
