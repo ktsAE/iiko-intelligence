@@ -83,6 +83,21 @@ class CloudReports:
     def read(self, path: str, payload: dict) -> Any:
         return self.post(path, payload, self.token)
 
+    def terminal_timezones(self) -> set[str]:
+        response = object_result(self.read(paths.TERMINAL_GROUPS, {"organizationIds": [self.org], "includeDisabled": False}))
+        groups = _object_array(response, "terminalGroups", "terminal groups")
+        sleeping = _objects(response.get("terminalGroupsInSleep", []), "sleeping terminal groups")
+        zones = set()
+        for group in [*groups, *sleeping]:
+            same_id(group.get("organizationId"), self.org, "terminal group organization")
+            for terminal in _object_array(group, "items", "terminals"):
+                same_id(terminal.get("organizationId"), self.org, "terminal organization")
+                name = terminal.get("timeZone")
+                if not isinstance(name, str) or not name.strip():
+                    raise ValueError("iiko returned a terminal without a time zone.")
+                zones.add(name.strip())
+        return zones
+
     def products(self, filters: list[dict], limit: int, offset: int) -> dict:
         response = self.read(paths.PRODUCTS, {"filters": filters, "limit": limit, "offset": offset})
         rows = []

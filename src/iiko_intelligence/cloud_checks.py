@@ -12,7 +12,8 @@ from .live_sales import LiveSales
 CheckGroup = Literal["all", "sales", "catalog", "stock", "documents", "recipes"]
 
 
-def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, product: str | None, store: str | None) -> dict:
+def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, product: str | None, store: str | None,
+                 restaurant_timezone: str | None = None) -> dict:
     at = moment(as_of) if as_of else datetime.now(timezone.utc).isoformat()
     day = datetime.fromisoformat(at).date().isoformat()
     checks = {}
@@ -34,7 +35,7 @@ def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, produc
     if group in ("all", "sales"):
         @cache
         def sales():
-            return LiveSales(api)
+            return LiveSales(api, restaurant_timezone=restaurant_timezone)
         check("get_sales_summary", lambda: sales().summary("yesterday", "yesterday"))
         check("get_top_dishes", lambda: sales().top("yesterday", "yesterday", "sales", 1))
         check("compare_sales_periods", lambda: sales().compare("yesterday", "yesterday", "today", "today", 1))

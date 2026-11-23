@@ -51,12 +51,13 @@ def optional_id(value: UUID | None) -> str | None:
 def register_cloud_tools(server: MCPServer) -> None:
     @server.tool(annotations=LIVE_READ)
     def check_live_access(group: CheckGroup = "all", as_of: str | None = None,
-                          product_id: UUID | None = None, store_id: UUID | None = None) -> dict[str, Any]:
+                          product_id: UUID | None = None, store_id: UUID | None = None,
+                          restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Test live iiko reads on this restaurant and report each outcome. Sales checks query yesterday and compare it with today.
         For recipe/cost checks it samples a dish and warehouse unless you supply their IDs. Choose as_of with the restaurant UTC
         offset to check documents on a known day. The default document date is the current UTC date.
         A successful empty list confirms the query ran. A sample document is needed for its detail check."""
-        return live(lambda api: check_access(api, group, as_of, optional_id(product_id), optional_id(store_id)))
+        return live(lambda api: check_access(api, group, as_of, optional_id(product_id), optional_id(store_id), restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
     def find_iiko_products(query: Query, field: Literal["name", "code", "productArticle"] = "name",

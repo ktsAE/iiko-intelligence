@@ -1,10 +1,15 @@
 """Read sales directly from iiko SALES OLAP for the authenticated organization."""
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
 from decimal import Decimal, ROUND_HALF_UP
+from functools import cached_property
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from tzlocal.windows_tz import win_tz
 
 from .cloud_reports import CloudReports
 from .cloud_sales import (COLUMNS, DAY, DEPARTMENT, DISH_ID, DISH_NAME, ORDERS, QUANTITY, REPORT, SALES,
@@ -13,34 +18,40 @@ from .sales_snapshot import MAX_SALES_ROWS, SALES_DEFINITION, SalesRow, number_u
 from .service import MAX_RANGE_DAYS, _money, _parse_date, _quantity
 
 METRIC = "sales_after_discounts"
-RELATIVE = {"today", "yesterday"}
+RELATIVE = {"today": "today", "сегодня": "today", "yesterday": "yesterday", "вчера": "yesterday"}
+
+
+def parse_zone(name: str) -> tzinfo:
+    name = name.strip()
+    if name == "Z":
+        return timezone.utc
+    # Terminal configurations may use a fixed UTC offset, a Windows name or an IANA name.
+    offset = re.fullmatch(r"(?:UTC|GMT)?([+-]?)(\d{1,2}):([0-5]\d)(?::00)?", name, re.IGNORECASE)
+    if offset:
+        minutes = int(offset[2]) * 60 + int(offset[3])
+        if minutes <= 14 * 60:
+            return timezone(timedelta(minutes=-minutes if offset[1] == "-" else minutes))
+    try:
+        return ZoneInfo(win_tz.get(name, name))
+    except (ZoneInfoNotFoundError, ValueError):
+        raise ValueError("Unknown restaurant time zone. Use an IANA name or a UTC offset such as +03:00.") from None
 
 
 @dataclass(frozen=True)
 class Window:
-    preset: str
-    start: date | None = None
-    end: date | None = None
+    start: date
+    end: date
 
     def filter(self) -> dict:
-        if self.start is None:
-            return {"periodType": self.preset}
         return {"periodType": "CUSTOM", "from": self.start.isoformat(), "to": self.end.isoformat(),
                 "includeLow": True, "includeHigh": True}
 
-    def contains(self, day: date) -> bool:
-        return self.start is None or self.start <= day <= self.end
-
 
 def windows(first: str, last: str) -> list[Window]:
-    if first.lower() in RELATIVE or last.lower() in RELATIVE:
-        if first.lower() != last.lower():
-            raise ValueError("For today or yesterday, use the same word for both dates. Otherwise use YYYY-MM-DD.")
-        return [Window(first.upper())]
     start, end = _parse_date(first, "date_from"), _parse_date(last, "date_to")
     if not 1 <= (end - start).days + 1 <= MAX_RANGE_DAYS:
         raise ValueError(f"Request an ordered period of up to {MAX_RANGE_DAYS} days.")
-    return [Window("CUSTOM", a, b) for a, b in _windows(start, end)]
+    return [Window(a, b) for a, b in _windows(start, end)]
 
 
 @dataclass
@@ -48,14 +59,16 @@ class Period:
     windows: list[Window]
     daily: dict[date, int]
     orders: dict[date, int] | None
+    requested_period: str
+    zone: tzinfo | None
 
     def info(self) -> dict:
         first, last = self.windows[0].start, self.windows[-1].end
-        if first is None:
-            first = last = next(iter(self.daily), None)
-        return {"from": first.isoformat() if first else None, "to": last.isoformat() if last else None,
-                "period_type": self.windows[0].preset, "days_with_rows": len(self.daily),
-                "calendar_days": (last - first).days + 1 if first else 1}
+        result = {"from": first.isoformat(), "to": last.isoformat(), "period_type": "CUSTOM",
+                  "days_with_rows": len(self.daily), "calendar_days": (last - first).days + 1}
+        if self.zone is not None:
+            result.update(requested_period=self.requested_period, restaurant_timezone=str(self.zone))
+        return result
 
 
 @dataclass
@@ -67,8 +80,10 @@ class Dish:
 
 
 class LiveSales:
-    def __init__(self, api: CloudReports, department: str | None = None):
+    def __init__(self, api: CloudReports, department: str | None = None, restaurant_timezone: str | None = None):
         self.api = api
+        self.timezone_name = restaurant_timezone
+        self.reference_time = datetime.now(timezone.utc)
         self.department = None if department is None else report_text(department, "outlet name")
         try:
             self.columns = column_permissions(api.read(COLUMNS, {"reportType": "SALES"}))
@@ -85,6 +100,18 @@ class LiveSales:
             require_columns(self.columns, flags)
             self.with_orders = self.columns.get(ORDERS, {}).get("canAggregate") is True
 
+    @cached_property
+    def restaurant_zone(self) -> tzinfo:
+        if self.timezone_name is not None:
+            return parse_zone(self.timezone_name)
+        try:
+            zones = {parse_zone(name) for name in self.api.terminal_timezones()}
+        except ValueError as exc:
+            raise ValueError(f"{exc} Supply restaurant_timezone for this outlet or give explicit dates.") from None
+        if len(zones) != 1:
+            raise ValueError("No single restaurant time zone found. Supply restaurant_timezone for this outlet or give explicit dates.")
+        return zones.pop()
+
     def context(self) -> dict:
         result = {"dataset_mode": "live", "restaurant": self.api.restaurant, "department": self.department,
                   "currency": self.api.currency, "checked_at": datetime.now(timezone.utc).isoformat(),
@@ -97,24 +124,37 @@ class LiveSales:
         request = olap_request(window.filter(), self.department, groups, measures)
         for row in _object_array(self.api.read(REPORT, request), "data", "sales report"):
             day = report_date(row.get(DAY))
-            if not window.contains(day) or (self.department is not None and row.get(DEPARTMENT) != self.department):
+            if not window.start <= day <= window.end or (self.department is not None and row.get(DEPARTMENT) != self.department):
                 raise ValueError("iiko returned sales outside the requested dates or outlet.")
             yield day, row
 
     def period(self, first: str, last: str) -> Period:
-        spans = windows(first, last)
+        requested = RELATIVE.get(first.lower())
+        last_relative = RELATIVE.get(last.lower())
+        zone = None
+        if requested is not None or last_relative is not None:
+            if requested != last_relative:
+                raise ValueError("Use the same relative day for both bounds or give two explicit dates.")
+            zone = self.restaurant_zone
+            day = self.reference_time.astimezone(zone).date()
+            if requested == "yesterday":
+                day -= timedelta(days=1)
+            spans = [Window(day, day)]
+        else:
+            requested = "custom"
+            spans = windows(first, last)
         daily = {}
         orders = {} if self.with_orders else None
         for span in spans:
             for day, row in self.rows(span, [], [ORDERS, SALES] if self.with_orders else [SALES]):
-                if day in daily or (span.start is None and daily):
+                if day in daily:
                     raise ValueError("iiko returned unexpected extra daily totals.")
                 daily[day] = number_units(row.get(SALES), 2, "daily sales")
                 if orders is not None:
                     orders[day] = number_units(row.get(ORDERS), 0, "order count")
                     if orders[day] < 0:
                         raise ValueError("iiko returned a negative order count.")
-        return Period(spans, daily, orders)
+        return Period(spans, daily, orders, requested.upper(), zone)
 
     def summary(self, first: str, last: str) -> dict:
         period = self.period(first, last)
@@ -137,9 +177,6 @@ class LiveSales:
         seen = set()
         dishes = {}
         for span in period.windows:
-            if span.start is None and period.daily:
-                day = next(iter(period.daily))
-                span = Window("CUSTOM", day, day)
             for day, row in self.rows(span, [DISH_ID, DISH_NAME], [QUANTITY, SALES]):
                 sale = SalesRow.from_values(day, row.get(DISH_ID), row.get(DISH_NAME), row.get(QUANTITY), row.get(SALES))
                 key = (day, sale.product_id, sale.name)
@@ -170,10 +207,8 @@ class LiveSales:
         before, after = self.period(a, b), self.period(c, d)
         base, current = sum(before.daily.values()), sum(after.daily.values())
         periods = [p.info() for p in (before, after)]
-        overlap = None
-        if all(p["from"] for p in periods):
-            overlap = max(0, (date.fromisoformat(min(p["to"] for p in periods)) -
-                              date.fromisoformat(max(p["from"] for p in periods))).days + 1)
+        overlap = max(0, (min(before.windows[-1].end, after.windows[-1].end) -
+                          max(before.windows[0].start, after.windows[0].start)).days + 1)
         result = {**self.context(), "baseline": {**periods[0], "sales": _money(base) if before.daily else None},
                   "current": {**periods[1], "sales": _money(current) if after.daily else None}, "overlap_days": overlap}
         if not before.daily or not after.daily:

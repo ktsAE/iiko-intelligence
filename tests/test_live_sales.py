@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest import TestCase, IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
 from urllib.error import HTTPError
@@ -15,6 +15,13 @@ from iiko_intelligence.mcp_server import server
 ORG = "00000000-0000-0000-0000-000000000123"
 PROFILE = Profile(ORG, {"appId": "app", "clientSecret": "fixture", "apiKey": "key"})
 FIRST, SECOND = "2026-09-30", "2026-10-01"
+# 00:30 on October 1 in Moscow, September 30 in UTC.
+NOW = datetime(2026, 9, 30, 21, 30, tzinfo=timezone.utc)
+
+
+def frozen_clock():
+    return patch("iiko_intelligence.live_sales.datetime", wraps=datetime)
+
 
 
 class Restaurant:
@@ -38,18 +45,18 @@ class Restaurant:
         assert token == "restaurant"
         if path == s.ORGANIZATIONS:
             return {"organizations": [{"id": ORG, "name": "Кафе", "currencyIsoName": "KZT", "private": "address"}]}
+        if path == paths.TERMINAL_GROUPS:
+            assert body == {"organizationIds": [ORG], "includeDisabled": False}
+            return {"terminalGroups": [{"organizationId": ORG, "items": [
+                {"organizationId": ORG, "timeZone": "Russian Standard Time"}]}], "terminalGroupsInSleep": []}
         if path == s.COLUMNS:
             return [{"name": key, "canFilter": True, "canGroup": True, "canAggregate": True} for key in self.columns]
         assert path == s.REPORT
         period, *outlet = body["filters"]
         assert body["reportType"] == "SALES" and body["buildSummary"] is False
-        kind = period["periodType"]
-        if kind == "CUSTOM":
-            assert period["includeLow"] and period["includeHigh"]
-            days = [day for day in sorted(self.data) if period["from"] <= day <= period["to"]]
-        else:
-            days = [FIRST if kind == "YESTERDAY" else SECOND]
-            assert "from" not in period and "to" not in period
+        assert period["periodType"] == "CUSTOM", "this deployment rejects relative OLAP filters"
+        assert period["includeLow"] and period["includeHigh"]
+        days = [day for day in sorted(self.data) if period["from"] <= day <= period["to"]]
         rows = []
         for day in days:
             detail = self.data.get(day, [])
@@ -75,6 +82,8 @@ class Restaurant:
 class Reporting(TestCase):
     def setUp(self):
         self.restaurant = Restaurant()
+        self.clock = self.enterContext(frozen_clock())
+        self.clock.now.return_value = NOW
 
     def test_relative_dates_outlet_stable_drilldown_and_rank(self):
         sales = LiveSales(self.restaurant.api(), "Кафе")
@@ -83,7 +92,8 @@ class Reporting(TestCase):
         self.assertEqual((result["rows"][0]["name"], result["rows"][0]["quantity"], result["detail"]["total_rows"]),
                          ("Чай", "3.000", 2))
         reports = [body for path, body in self.restaurant.calls if path == s.REPORT]
-        self.assertEqual(reports[0]["filters"], [{"name": s.DAY, "filterType": "DateRange", "periodType": "YESTERDAY"},
+        self.assertEqual(reports[0]["filters"], [{"name": s.DAY, "filterType": "DateRange", "periodType": "CUSTOM",
+            "from": FIRST, "to": FIRST, "includeLow": True, "includeHigh": True},
             {"name": s.DEPARTMENT, "filterType": "IncludeValues", "values": ["Кафе"]}])
         self.assertEqual(reports[1]["filters"][0]["from"], FIRST)
         self.assertEqual(sales.top(FIRST, SECOND, "sales", 1)["rows"][0]["sales_after_discounts"], "210.00")
@@ -101,13 +111,53 @@ class Reporting(TestCase):
         queries = [body for path, body in self.restaurant.calls if path == s.REPORT]
         self.assertEqual(len(queries), 1)
         self.assertEqual(queries[0]["aggregateFields"], [s.SALES])
-        self.assertEqual(queries[0]["filters"], [{"name": s.DAY, "filterType": "DateRange", "periodType": "YESTERDAY"},
+        self.assertEqual(queries[0]["filters"], [{"name": s.DAY, "filterType": "DateRange", "periodType": "CUSTOM",
+            "from": FIRST, "to": FIRST, "includeLow": True, "includeHigh": True},
                                                  {"name": s.DEPARTMENT, "filterType": "IncludeValues", "values": ["Кафе"]}])
         self.assertEqual(sales.top(FIRST, SECOND, "sales", 1)["rows"][0]["name"], "Суп")
         self.assertEqual(sales.compare(FIRST, FIRST, SECOND, SECOND, 1)["change"], "90.00")
         self.restaurant.data = {}
         empty = sales.summary("yesterday", "yesterday")
         self.assertEqual((empty["status"], empty["totals"]["sales_after_discounts"]), ("no_data", None))
+
+    def test_date_resolution_around_midnight_year_and_dst(self):
+        cases = (
+            ("Europe/Moscow", "2026-11-22T21:00:00+00:00", "2026-11-22", "2026-11-23"),
+            ("+05:30", "2027-01-01T00:01:00+05:30", "2026-12-31", "2027-01-01"),
+            ("America/New_York", "2026-03-09T04:30:00+00:00", "2026-03-08", "2026-03-09"),
+            ("Pacific Standard Time", "2026-11-02T07:30:00+00:00", "2026-10-31", "2026-11-01"),
+        )
+        for zone, instant, yesterday, today in cases:
+            with self.subTest(zone=zone):
+                self.clock.now.return_value = datetime.fromisoformat(instant)
+                sales = LiveSales(self.restaurant.api(), restaurant_timezone=zone)
+                self.clock.now.return_value = datetime(2040, 1, 1, tzinfo=timezone.utc)
+                result = sales.compare("yesterday", "yesterday", "today", "today", 2)
+                self.assertEqual((result["baseline"]["from"], result["current"]["from"]), (yesterday, today))
+        self.assertNotIn(paths.TERMINAL_GROUPS, [p for p, _ in self.restaurant.calls])
+
+    def test_clock_is_cached_and_missing_or_conflicting_zones_require_a_choice(self):
+        def groups(*zones):
+            return [{"organizationId": ORG, "items": [{"organizationId": ORG, "timeZone": z} for z in zones]}]
+        cases = [
+            {"terminalGroups": []},
+            {"terminalGroups": groups("unknown/zone")},
+            {"terminalGroups": groups("")},
+            {"terminalGroups": groups("Europe/Moscow"), "terminalGroupsInSleep": groups("Asia/Tokyo")},
+            {"terminalGroups": [{"organizationId": "wrong", "items": []}]},
+            s.CloudHTTPError(paths.TERMINAL_GROUPS, 403),
+        ]
+        for response in cases:
+            self.restaurant.responses[paths.TERMINAL_GROUPS] = response
+            sales = LiveSales(self.restaurant.api())
+            with self.assertRaisesRegex(ValueError, "restaurant_timezone"):
+                sales.period("yesterday", "yesterday")
+            self.assertEqual(sales.summary(FIRST, FIRST)["totals"]["sales_after_discounts"], "130.00")
+        self.restaurant.calls.clear()
+        self.restaurant.responses[paths.TERMINAL_GROUPS] = {"terminalGroups": [], "terminalGroupsInSleep": groups("03:00:00")}
+        result = LiveSales(self.restaurant.api()).compare("yesterday", "yesterday", "today", "today", 2)
+        self.assertEqual((result["baseline"]["from"], result["current"]["from"], result["change"]), (FIRST, SECOND, "90.00"))
+        self.assertEqual(sum(path == paths.TERMINAL_GROUPS for path, _ in self.restaurant.calls), 1)
 
     def test_only_field_list_503_enables_direct_report(self):
         for status in (401, 403, 429, 503):
@@ -143,7 +193,7 @@ class Reporting(TestCase):
         self.restaurant.data = {}
         report = sales.summary("yesterday", "yesterday")
         self.assertEqual((report["status"], report["totals"]["sales_after_discounts"], report["period"]["from"]),
-                         ("no_data", None, None))
+                         ("no_data", None, FIRST))
         self.assertEqual(sales.compare(FIRST, FIRST, SECOND, SECOND, 1)["change"], None)
         self.restaurant.data[FIRST] = [("1", "Возврат", 1, 0)]
         report = sales.summary("yesterday", "yesterday")
@@ -201,8 +251,32 @@ class Reporting(TestCase):
 
 
 class Protocol(IsolatedAsyncioTestCase):
+    async def test_yesterday_sends_the_same_request_as_explicit_local_date(self):
+        upstream = Restaurant()
+        # Local midnight has passed even though UTC and the host calendar might still show the 22nd.
+        self.enterContext(frozen_clock()).now.return_value = datetime.fromisoformat("2026-11-22T21:01:00+00:00")
+        upstream.data = {"2026-11-22": [("A", "Test dish", 1, 40)]}
+        with patch("iiko_intelligence.cloud_mcp.read_profile", return_value=PROFILE), patch(
+                "iiko_intelligence.cloud_mcp.CloudReports", side_effect=lambda profile: upstream.api()):
+            async with Client(server) as client:
+                results = []
+                for label in ("вчера", "yesterday", "2026-11-22"):
+                    reply = await client.call_tool("get_sales_summary", {"source": "live", "date_from": label, "date_to": label})
+                    self.assertFalse(reply.is_error)
+                    results.append(reply.structured_content)
+                requests = [body for path, body in upstream.calls if path == s.REPORT]
+                self.assertEqual(len(requests), 3)
+                self.assertEqual(requests, [requests[0]] * 3)
+                self.assertEqual(results[0]["period"], {"from": "2026-11-22", "to": "2026-11-22", "period_type": "CUSTOM",
+                                 "requested_period": "YESTERDAY", "restaurant_timezone": "Europe/Moscow",
+                                 "days_with_rows": 1, "calendar_days": 1})
+                self.assertEqual([r["totals"] for r in results], [results[0]["totals"]] * 3)
+                self.assertEqual(results[0]["totals"]["sales_after_discounts"], "40.00")
+                self.assertEqual(sum(path == paths.TERMINAL_GROUPS for path, _ in upstream.calls), 2)
+
     async def test_online_answer_denial_and_missing_connection(self):
         upstream = Restaurant()
+        self.enterContext(frozen_clock()).now.return_value = NOW
         with patch("iiko_intelligence.cloud_mcp.configured", return_value=True), \
                 patch("iiko_intelligence.cloud_mcp.read_profile", return_value=PROFILE), \
                 patch("iiko_intelligence.cloud_mcp.CloudReports", side_effect=lambda profile: upstream.api()):

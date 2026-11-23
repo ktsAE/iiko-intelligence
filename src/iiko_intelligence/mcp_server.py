@@ -22,7 +22,8 @@ from .updates import start_checks, update_status, with_update_notice
 
 INSTRUCTIONS = (
     "For restaurant figures use live reports when Cloud is configured. For yesterday or today pass the same "
-    "English word as both sales dates. Label the source, organization, dates and currency from the result. "
+    "English word as both sales dates. If iiko cannot determine the outlet time zone, ask the manager and pass "
+    "restaurant_timezone. Label the source, organization, dates and currency from the result. "
     "Use get_live_stock, get_incoming_invoices and get_writeoff_acts for current warehouse questions. "
     "Use check_live_access for online access checks. Label imported and demo reports explicitly. "
     "When comparing periods, mention missing days or unequal lengths. Explain unavailable metrics without treating them as zero. "
@@ -93,9 +94,9 @@ def use_live(source: SalesSource, department: str | None, *dates: str) -> bool:
     annotations=LIVE_READ,
 )
 def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto",
-                      department: str | None = None) -> dict[str, Any]:
+                      department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     if use_live(source, department, date_from, date_to):
-        return cloud_mcp.live(lambda api: LiveSales(api, department).summary(date_from, date_to))
+        return cloud_mcp.live(lambda api: LiveSales(api, department, restaurant_timezone).summary(date_from, date_to))
     with open_reports(database_path()) as service:
         return with_update_notice(service.sales_summary(date_from, date_to))
 
@@ -108,9 +109,9 @@ def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto"
 )
 def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
                    rank_by: Literal["sales", "quantity"] = "sales", source: SalesSource = "auto",
-                   department: str | None = None) -> dict[str, Any]:
+                   department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     if use_live(source, department, date_from, date_to):
-        return cloud_mcp.live(lambda api: LiveSales(api, department).top(date_from, date_to, rank_by, limit))
+        return cloud_mcp.live(lambda api: LiveSales(api, department, restaurant_timezone).top(date_from, date_to, rank_by, limit))
     with open_reports(database_path()) as service:
         return with_update_notice(service.top_dishes(date_from, date_to, limit=limit, rank_by=rank_by))
 
@@ -120,10 +121,10 @@ def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
                          "largest absolute contributions. Check period lengths and days with data.")
 def compare_sales_periods(baseline_from: str, baseline_to: str, current_from: str, current_to: str,
                           limit: RowLimit = 10, source: SalesSource = "auto",
-                          department: str | None = None) -> dict[str, Any]:
+                          department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     dates = baseline_from, baseline_to, current_from, current_to
     if use_live(source, department, *dates):
-        return cloud_mcp.live(lambda api: LiveSales(api, department).compare(*dates, limit))
+        return cloud_mcp.live(lambda api: LiveSales(api, department, restaurant_timezone).compare(*dates, limit))
     return with_update_notice(compare_periods(database_path(), baseline_from, baseline_to, current_from, current_to, limit=limit))
 
 
