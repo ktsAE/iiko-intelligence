@@ -10,7 +10,7 @@ if (-not $VerifyOnly -and ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64
     throw 'Run the installer on 64-bit Windows.'
 }
 $ownerRepo = 'ktsAE/iiko-intelligence'
-$tag = 'v0.5.2'
+$tag = 'v0.6.0'
 $archiveName = 'iiko-intelligence-windows-x64.zip'
 $modulus = '2vMeeuov28EUNJvCPV61TzpEKP+8nfs/7xr1H+6vijf0itjas8y1cYY8TEEIKmpseCwfx2nruYScEc64zZG8XjvMHZUrPo9MX3XzN0gmOUkY3xvHOW1cbQeY3zOt94yXih1v0HTWH3SNv6xmnzqSE355ZBv3HTFM0zwIBrMmAFDS8J2p+TDUcWO9icCmDR/OFWBAX4al54cVwFyiwN9aXn/IrBQfEP6GbhTyc0HPigby3FS/DMjwEsOskhj4xyXV8T2KcpycXMv6hamwb2QcJdQC5JZaRDvVoPX8d4HipbWm4M5Mzugm1BWUMVe2MirdVjdlRD97kD/k09GLVYPPBe2PrBWHSVWpqkl80dY+xb2IH/8COrrHZT0+kTJl+SrzwIMa3miq2LZJbKAmyJ+hqttTUInwpoYa0CkiLWJUD9MVUGOjwZKDc29fsbNz+2bLiGCD0bf3W8anJ+gV0SI4Qy5cA6GlEf5Bn7MQuyL3XO/yWEpyMbkXCeQmPXGkQwJr'
 $parent = (Get-Item -LiteralPath $ParentDirectory).FullName

@@ -1,57 +1,19 @@
 """Read sales directly from iiko SALES OLAP for the authenticated organization."""
 from __future__ import annotations
 
-import re
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone, tzinfo
+from datetime import date, datetime, timezone, tzinfo
 from decimal import Decimal, ROUND_HALF_UP
-from functools import cached_property
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
-
-from tzlocal.windows_tz import win_tz
 
 from .cloud_reports import CloudReports
 from .cloud_sales import (COLUMNS, DAY, DEPARTMENT, DISH_ID, DISH_NAME, ORDERS, QUANTITY, REPORT, SALES,
-                          CloudHTTPError, _object_array, _windows, column_permissions, olap_request, require_columns)
+                          CloudHTTPError, _object_array, column_permissions, olap_request, require_columns)
 from .sales_snapshot import MAX_SALES_ROWS, SALES_DEFINITION, SalesRow, number_units, report_date, report_text
-from .service import MAX_RANGE_DAYS, _money, _parse_date, _quantity
+from .service import _money, _quantity
+from .report_calendar import RestaurantCalendar, Window
 
 METRIC = "sales_after_discounts"
-RELATIVE = {"today": "today", "сегодня": "today", "yesterday": "yesterday", "вчера": "yesterday"}
-
-
-def parse_zone(name: str) -> tzinfo:
-    name = name.strip()
-    if name == "Z":
-        return timezone.utc
-    # Terminal configurations may use a fixed UTC offset, a Windows name or an IANA name.
-    offset = re.fullmatch(r"(?:UTC|GMT)?([+-]?)(\d{1,2}):([0-5]\d)(?::00)?", name, re.IGNORECASE)
-    if offset:
-        minutes = int(offset[2]) * 60 + int(offset[3])
-        if minutes <= 14 * 60:
-            return timezone(timedelta(minutes=-minutes if offset[1] == "-" else minutes))
-    try:
-        return ZoneInfo(win_tz.get(name, name))
-    except (ZoneInfoNotFoundError, ValueError):
-        raise ValueError("Unknown restaurant time zone. Use an IANA name or a UTC offset such as +03:00.") from None
-
-
-@dataclass(frozen=True)
-class Window:
-    start: date
-    end: date
-
-    def filter(self) -> dict:
-        return {"periodType": "CUSTOM", "from": self.start.isoformat(), "to": self.end.isoformat(),
-                "includeLow": True, "includeHigh": True}
-
-
-def windows(first: str, last: str) -> list[Window]:
-    start, end = _parse_date(first, "date_from"), _parse_date(last, "date_to")
-    if not 1 <= (end - start).days + 1 <= MAX_RANGE_DAYS:
-        raise ValueError(f"Request an ordered period of up to {MAX_RANGE_DAYS} days.")
-    return [Window(a, b) for a, b in _windows(start, end)]
 
 
 @dataclass
@@ -61,6 +23,7 @@ class Period:
     orders: dict[date, int] | None
     requested_period: str
     zone: tzinfo | None
+    includes_today: bool
 
     def info(self) -> dict:
         first, last = self.windows[0].start, self.windows[-1].end
@@ -68,6 +31,10 @@ class Period:
                   "days_with_rows": len(self.daily), "calendar_days": (last - first).days + 1}
         if self.zone is not None:
             result.update(requested_period=self.requested_period, restaurant_timezone=str(self.zone))
+        if result["days_with_rows"] < result["calendar_days"]:
+            result["days_without_rows"] = result["calendar_days"] - result["days_with_rows"]
+        if self.includes_today:
+            result["includes_open_day"] = True
         return result
 
 
@@ -82,8 +49,7 @@ class Dish:
 class LiveSales:
     def __init__(self, api: CloudReports, department: str | None = None, restaurant_timezone: str | None = None):
         self.api = api
-        self.timezone_name = restaurant_timezone
-        self.reference_time = datetime.now(timezone.utc)
+        self.calendar = RestaurantCalendar(api.terminal_timezones, restaurant_timezone, datetime.now(timezone.utc))
         self.department = None if department is None else report_text(department, "outlet name")
         try:
             self.columns = column_permissions(api.read(COLUMNS, {"reportType": "SALES"}))
@@ -100,22 +66,10 @@ class LiveSales:
             require_columns(self.columns, flags)
             self.with_orders = self.columns.get(ORDERS, {}).get("canAggregate") is True
 
-    @cached_property
-    def restaurant_zone(self) -> tzinfo:
-        if self.timezone_name is not None:
-            return parse_zone(self.timezone_name)
-        try:
-            zones = {parse_zone(name) for name in self.api.terminal_timezones()}
-        except ValueError as exc:
-            raise ValueError(f"{exc} Supply restaurant_timezone for this outlet or give explicit dates.") from None
-        if len(zones) != 1:
-            raise ValueError("No single restaurant time zone found. Supply restaurant_timezone for this outlet or give explicit dates.")
-        return zones.pop()
-
     def context(self) -> dict:
         result = {"dataset_mode": "live", "restaurant": self.api.restaurant, "department": self.department,
                   "currency": self.api.currency, "checked_at": datetime.now(timezone.utc).isoformat(),
-                  "date_field": DAY, "metric": METRIC, "metric_definition": SALES_DEFINITION}
+                  "scope": "department" if self.department else "organization", "date_field": DAY, "metric": METRIC, "metric_definition": SALES_DEFINITION}
         if self.columns is None:
             result["report_note"] = "iiko returned HTTP 503 for its field list. The direct SALES report omits optional order counts."
         return result
@@ -129,20 +83,8 @@ class LiveSales:
             yield day, row
 
     def period(self, first: str, last: str) -> Period:
-        requested = RELATIVE.get(first.lower())
-        last_relative = RELATIVE.get(last.lower())
-        zone = None
-        if requested is not None or last_relative is not None:
-            if requested != last_relative:
-                raise ValueError("Use the same relative day for both bounds or give two explicit dates.")
-            zone = self.restaurant_zone
-            day = self.reference_time.astimezone(zone).date()
-            if requested == "yesterday":
-                day -= timedelta(days=1)
-            spans = [Window(day, day)]
-        else:
-            requested = "custom"
-            spans = windows(first, last)
+        resolved = self.calendar.resolve(first, last)
+        spans = resolved.windows
         daily = {}
         orders = {} if self.with_orders else None
         for span in spans:
@@ -154,7 +96,7 @@ class LiveSales:
                     orders[day] = number_units(row.get(ORDERS), 0, "order count")
                     if orders[day] < 0:
                         raise ValueError("iiko returned a negative order count.")
-        return Period(spans, daily, orders, requested.upper(), zone)
+        return Period(spans, daily, orders, resolved.label, resolved.zone, resolved.includes_today)
 
     def summary(self, first: str, last: str) -> dict:
         period = self.period(first, last)
@@ -195,7 +137,7 @@ class LiveSales:
 
     def top(self, first: str, last: str, rank_by: str, limit: int) -> dict:
         period = self.period(first, last)
-        dishes = self.dishes(period)
+        dishes = self.dishes(period) if period.daily else {}
         ranked = sorted(dishes.items(), key=lambda pair: (
             -(pair[1].quantity if rank_by == "quantity" else pair[1].sales), pair[0]))
         return {**self.context(), "status": "ok" if period.daily else "no_data", "period": period.info(),
@@ -211,6 +153,16 @@ class LiveSales:
                           max(before.windows[0].start, after.windows[0].start)).days + 1)
         result = {**self.context(), "baseline": {**periods[0], "sales": _money(base) if before.daily else None},
                   "current": {**periods[1], "sales": _money(current) if after.daily else None}, "overlap_days": overlap}
+        notes = []
+        if overlap:
+            notes.append("periods_overlap")
+        if periods[0]["calendar_days"] != periods[1]["calendar_days"]:
+            notes.append("unequal_period_lengths")
+        if before.includes_today or after.includes_today:
+            notes.append("includes_open_day")
+        if any(p["days_with_rows"] < p["calendar_days"] for p in periods):
+            notes.append("days_without_rows")
+        result["comparison_notes"] = notes
         if not before.daily or not after.daily:
             return {**result, "status": "insufficient_data", "change": None, "change_percent": None}
         delta = current - base

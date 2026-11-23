@@ -9,7 +9,8 @@ from iiko_intelligence import cloud_paths as paths, cloud_sales as s
 from iiko_intelligence.cloud_checks import check_access
 from iiko_intelligence.cloud_profile import Profile
 from iiko_intelligence.cloud_reports import CloudReports
-from iiko_intelligence.live_sales import LiveSales, windows
+from iiko_intelligence.live_sales import LiveSales
+from iiko_intelligence.report_calendar import windows
 from iiko_intelligence.mcp_server import server
 
 ORG = "00000000-0000-0000-0000-000000000123"

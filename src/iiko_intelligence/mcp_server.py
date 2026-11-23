@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sqlite3
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -12,7 +13,8 @@ from pydantic import Field
 from . import __version__
 from . import cloud_mcp
 from .cloud_mcp import LIVE_READ, cloud_status, register_cloud_tools
-from .live_sales import RELATIVE, LiveSales
+from .live_sales import LiveSales
+from .report_calendar import preset
 from .config import database_path
 from .manager_reports import compare_periods
 from .sales_snapshot import open_reports
@@ -21,8 +23,18 @@ from .updates import start_checks, update_status, with_update_notice
 
 
 INSTRUCTIONS = (
-    "For restaurant figures use live reports when Cloud is configured. For yesterday or today pass the same "
-    "English word as both sales dates. If iiko cannot determine the outlet time zone, ask the manager and pass "
+    "For restaurant figures use live reports when Cloud is configured. For sales and document lists pass the same "
+    "preset for both bounds: today, yesterday, day_before_yesterday, this_week, last_week (Mon-Sun), this_month, "
+    "last_month, month_before_last, week_before_last, previous_month_to_date, previous_week_to_date, this_quarter, "
+    "last_quarter, this_year, last_year, last_N_days or last_N_complete_days (1-366). Examples: last_7_days or "
+    "last_30_days (include today), last_7_complete_days or last_30_complete_days (end yesterday). "
+    "For an ambiguous week or month ask whether it means a calendar period or rolling days. "
+    "Use an exact department for an outlet, otherwise label organization-wide sales. Explain comparison_notes: "
+    "overlap, unequal lengths, open accounting day or days without returned rows. For document lists follow "
+    "next_page_arguments through the final page before reporting totals, distinguish deleted, draft and posted documents. "
+    "Also use next_page_arguments for stock, recipes and costs so the instant stays fixed across pages. If a scoped "
+    "sales report is empty, verify the exact Department name before claiming that an outlet had no sales. "
+    "If iiko cannot determine one time zone, ask the manager and pass "
     "restaurant_timezone. Label the source, organization, dates and currency from the result. "
     "Use get_live_stock, get_incoming_invoices and get_writeoff_acts for current warehouse questions. "
     "Use check_live_access for online access checks. Label imported and demo reports explicitly. "
@@ -53,17 +65,20 @@ server = MCPServer(
     annotations=READ_ONLY,
 )
 def get_capabilities() -> dict[str, Any]:
-    with open_reports(database_path()) as service:
-        result = service.capabilities()
-        result["software_update"] = update_status()
-        result["live_cloud"] = {
-            **cloud_status(),
-            "methods": ["check_live_access", "get_sales_summary", "get_top_dishes", "compare_sales_periods",
-                        "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_recipe_cost",
-                        "get_live_stock", "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document"],
-        }
-        result["tools"]["live_iiko"] = result["live_cloud"]["status"]
-        return result
+    try:
+        with open_reports(database_path()) as service:
+            result = service.capabilities()
+    except (OSError, sqlite3.Error, KeyError, ValueError):
+        result = {"dataset_mode": "unavailable", "snapshot_status": "unavailable", "tools": {}}
+    result["software_update"] = update_status()
+    result["live_cloud"] = {
+        **cloud_status(),
+        "methods": ["check_live_access", "get_sales_summary", "get_top_dishes", "compare_sales_periods",
+                    "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_recipe_cost",
+                    "get_live_stock", "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document"],
+    }
+    result["tools"]["live_iiko"] = result["live_cloud"]["status"]
+    return result
 
 
 @server.tool(
@@ -72,24 +87,28 @@ def get_capabilities() -> dict[str, Any]:
     annotations=READ_ONLY,
 )
 def get_data_status() -> dict[str, Any]:
-    with open_reports(database_path()) as service:
-        return {**service.data_status(), "live_cloud": cloud_status(), "software_update": update_status()}
+    try:
+        with open_reports(database_path()) as service:
+            snapshot = service.data_status()
+    except (OSError, sqlite3.Error, KeyError, ValueError):
+        snapshot = {"dataset_mode": "unavailable", "snapshot_status": "unavailable"}
+    return {**snapshot, "live_cloud": cloud_status(), "software_update": update_status()}
 
 
 SalesSource = Literal["auto", "live", "snapshot"]
 
 
 def use_live(source: SalesSource, department: str | None, *dates: str) -> bool:
-    if source == "snapshot" and (department is not None or any(v.lower() in RELATIVE for v in dates)):
+    if source == "snapshot" and (department is not None or any(preset(v) is not None for v in dates)):
         raise ValueError("For an imported report use its explicit dates and its recorded outlet.")
     return source == "live" or (source == "auto" and (
-        department is not None or any(v.lower() in RELATIVE for v in dates) or cloud_mcp.configured()))
+        department is not None or any(preset(v) is not None for v in dates) or cloud_mcp.configured()))
 
 
 @server.tool(
     name="get_sales_summary",
-    description="Read revenue after discounts and available order counts. Use yesterday or today as both dates "
-                "for the iiko accounting day, or inclusive YYYY-MM-DD dates. Auto uses configured Cloud. "
+    description="Read revenue after discounts and available order counts. Repeat a named period such as last_week or last_month "
+                "in both date fields, or inclusive YYYY-MM-DD dates. Auto uses configured Cloud. "
                 "Optional department is an exact outlet name. Choose snapshot for an imported report.",
     annotations=LIVE_READ,
 )
@@ -103,7 +122,7 @@ def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto"
 
 @server.tool(
     name="get_top_dishes",
-    description="Rank dishes by sales or quantity. Auto uses configured Cloud. Use yesterday or today for both dates "
+    description="Rank dishes by sales or quantity. Auto uses configured Cloud. Repeat a named period such as last_month for both dates "
                 "or inclusive YYYY-MM-DD dates. Live dish amounts must reconcile with the daily sales report.",
     annotations=LIVE_READ,
 )
@@ -118,7 +137,7 @@ def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
 
 @server.tool(name="compare_sales_periods", annotations=LIVE_READ,
              description="Compare two inclusive periods from the configured Cloud or a requested snapshot. Show sales change and dishes with the "
-                         "largest absolute contributions. Check period lengths and days with data.")
+                         "largest absolute contributions. Repeat each named period in its two bounds. Explain comparison_notes.")
 def compare_sales_periods(baseline_from: str, baseline_to: str, current_from: str, current_to: str,
                           limit: RowLimit = 10, source: SalesSource = "auto",
                           department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:

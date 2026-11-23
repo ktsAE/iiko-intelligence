@@ -6,6 +6,8 @@ from functools import cache
 from typing import Literal
 from uuid import UUID
 
+from .report_calendar import RestaurantCalendar
+from .cloud_sales import CloudHTTPError
 from .cloud_reports import CloudReports, moment
 from .live_sales import LiveSales
 
@@ -14,8 +16,17 @@ CheckGroup = Literal["all", "sales", "catalog", "stock", "documents", "recipes"]
 
 def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, product: str | None, store: str | None,
                  restaurant_timezone: str | None = None) -> dict:
-    at = moment(as_of) if as_of else datetime.now(timezone.utc).isoformat()
-    day = datetime.fromisoformat(at).date().isoformat()
+    instant = datetime.now(timezone.utc)
+    at = moment(as_of) if as_of else instant.isoformat()
+    calendar = RestaurantCalendar(api.terminal_timezones, restaurant_timezone, instant)
+
+    @cache
+    def restaurant_time():
+        return datetime.fromisoformat(at) if as_of else instant.astimezone(calendar.zone)
+
+    def accounting_day():
+        return restaurant_time().date().isoformat()
+
     checks = {}
 
     def check(name, operation):
@@ -26,6 +37,8 @@ def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, produc
                 state = "no_data"
             checks[name] = {"status": state}
             return result
+        except CloudHTTPError as exc:
+            checks[name] = {"status": "unavailable", "reason": str(exc), **exc.details}
         except ValueError as exc:
             checks[name] = {"status": "unavailable", "reason": str(exc)}
         except (KeyError, TypeError, ArithmeticError, AttributeError):
@@ -59,7 +72,7 @@ def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, produc
     if group in ("all", "documents"):
         for kind, tool in (("stocktake", "get_inventory_counts"), ("invoice", "get_incoming_invoices"),
                            ("writeoff", "get_writeoff_acts")):
-            listing = check(tool, lambda: api.documents(kind, day, day, store, 1, 0))
+            listing = check(tool, lambda: api.documents(kind, accounting_day(), accounting_day(), store, 1, 0))
             detail = "get_iiko_document." + kind
             if listing.get("rows"):
                 check(detail, lambda: api.document(kind, str(UUID(listing["rows"][0]["documentId"])), "items", 1, 0))
@@ -67,12 +80,12 @@ def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, produc
                 checks[detail] = {"status": "not_checked", "reason": "No sample document ID from this list and date."}
     if test_recipes:
         if sample_product:
-            check("get_recipe_card", lambda: api.recipe(sample_product, day, 1, 0))
+            check("get_recipe_card", lambda: api.recipe(sample_product, accounting_day(), 1, 0))
         else:
             checks["get_recipe_card"] = {"status": "needs_input", "required": ["product_id"]}
         if sample_product and sample_store:
             check("get_item_cost", lambda: api.cost(sample_product, sample_store, at, 1))
-            check("get_recipe_cost", lambda: api.recipe_cost(sample_product, sample_store, at, None, 1, 0))
+            check("get_recipe_cost", lambda: api.recipe_cost(sample_product, sample_store, restaurant_time().isoformat(), None, 1, 0))
         else:
             required = [key for key, value in (("product_id", sample_product), ("store_id", sample_store)) if not value]
             for name in ("get_item_cost", "get_recipe_cost"):

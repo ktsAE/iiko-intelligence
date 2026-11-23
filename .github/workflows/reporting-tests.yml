@@ -1,0 +1,19 @@
+name: Reporting regression tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  reporting:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run the locked test suite with synthetic records
+        env:
+          IIKO_NO_UPDATE_CHECK: "1"
+        run: |
+          python3 -m venv "$RUNNER_TEMP/iiko-test-tools"
+          "$RUNNER_TEMP/iiko-test-tools/bin/pip" install uv==0.13.8
+          "$RUNNER_TEMP/iiko-test-tools/bin/uv" run --locked --python python3 -m unittest discover -s tests -q

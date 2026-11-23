@@ -28,10 +28,46 @@ Post = Callable[[str, dict[str, Any], str | None], Any]
 
 
 class CloudHTTPError(ValueError):
-    def __init__(self, path: str, status: int):
+    def __init__(self, path: str, status: int, *, correlation_id: str | None = None,
+                 code: str | None = None, retry_after: int | None = None):
         self.status = status
-        hint = "service temporarily unavailable" if status == 503 else "check API access and report settings"
+        hints = {400: "check the request dates, filters and identifiers",
+                 401: "check the saved Cloud credentials and token", 403: "check organization and method permissions",
+                 404: "verify the method or record identifier", 429: "rate limit reached; wait before retrying",
+                 503: "service temporarily unavailable; retry later"}
+        hint = hints.get(status, "iiko service error; retry later" if status >= 500 else "check API access and report settings")
+        self.details = {"operation": path, "http_status": status}
+        if correlation_id:
+            self.details["correlation_id"] = correlation_id
+        if code:
+            self.details["iiko_code"] = code
+        if retry_after is not None:
+            self.details["retry_after_seconds"] = retry_after
         super().__init__(f"iiko Cloud rejected {path} (HTTP {status}); {hint}")
+
+    @classmethod
+    def from_response(cls, path: str, exc: HTTPError) -> CloudHTTPError:
+        # API error messages can echo submitted fields. Only return documented identifiers.
+        info = {}
+        try:
+            raw = exc.read(8193)
+            if len(raw) <= 8192:
+                body = json.loads(raw)
+                if isinstance(body, dict):
+                    info = body
+        except (ValueError, OSError, HTTPException):
+            pass
+        correlation = info.get("correlationId")
+        try:
+            correlation = str(UUID(correlation)) if isinstance(correlation, str) else None
+        except ValueError:
+            correlation = None
+        code = info.get("error") or info.get("code")
+        if code not in ("INVALID_BODY_JSON_FORMAT", "ORGANIZATION_DENIED", "MODULE_ID_NOT_FOUND", "TOO_OLD_REVISION"):
+            code = None
+        retry = exc.headers.get("Retry-After", "") if exc.headers else ""
+        seconds = int(retry) if retry.isascii() and retry.isdigit() and len(retry) <= 9 else None
+        return cls(path, exc.code, correlation_id=correlation, code=code, retry_after=seconds)
 
 
 class _NoRedirect(HTTPRedirectHandler):
@@ -50,8 +86,9 @@ def _post(path: str, payload: dict[str, Any], token: str | None) -> Any:
         with build_opener(ProxyHandler({}), _NoRedirect()).open(request, timeout=30) as response:
             raw = response.read(MAX_RESPONSE_BYTES + 1)
     except HTTPError as exc:
-        exc.close()
-        raise CloudHTTPError(path, exc.code) from None
+        with exc:
+            error = CloudHTTPError.from_response(path, exc)
+        raise error from None
     except (OSError, URLError, HTTPException):
         raise ValueError(f"could not reach iiko Cloud for {path}; check your network and retry") from None
     if len(raw) > MAX_RESPONSE_BYTES:

@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from . import cloud_paths as paths
 from .cloud_profile import Profile
+from .report_calendar import RestaurantCalendar
 from .cloud_sales import Post, _object_array, _objects, _post, organization_session
 
 
@@ -37,6 +38,13 @@ def remote_page(rows: list, response: dict, offset: int, limit: int) -> dict:
         raise ValueError("Inconsistent iiko page size.")
     more = end < count if count is not None else len(rows) == limit
     return {"rows": rows, "total_rows": count, "next_offset": end if more else None}
+
+
+def continuation(result: dict, **arguments) -> dict:
+    # Freeze relative dates and times so later pages query the same accounting period.
+    if result["next_offset"] is not None:
+        result["next_page_arguments"] = {**arguments, "offset": result["next_offset"]}
+    return result
 
 
 def day(value: str) -> str:
@@ -97,6 +105,9 @@ class CloudReports:
                     raise ValueError("iiko returned a terminal without a time zone.")
                 zones.add(name.strip())
         return zones
+
+    def calendar(self, restaurant_timezone: str | None) -> RestaurantCalendar:
+        return RestaurantCalendar(self.terminal_timezones, restaurant_timezone, datetime.now(timezone.utc))
 
     def products(self, filters: list[dict], limit: int, offset: int) -> dict:
         response = self.read(paths.PRODUCTS, {"filters": filters, "limit": limit, "offset": offset})
@@ -165,7 +176,8 @@ class CloudReports:
                 row["unitName"] = label
         return warnings
 
-    def recipe(self, product: str, as_of: str, limit: int, offset: int) -> dict:
+    def recipe(self, product: str, as_of: str, limit: int, offset: int, restaurant_timezone: str | None = None) -> dict:
+        as_of = self.calendar(restaurant_timezone).single_day(as_of).isoformat()
         response = object_result(self.read(paths.RECIPE, {"productId": product, "organizationId": self.org,
                                                           "date": day(as_of), "view": "assembled"}))
         if response.get("view") != "assembled":
@@ -182,15 +194,19 @@ class CloudReports:
         lines = [selected(r, RECIPE_LINE) for r in _objects(ingredients, "recipe ingredients")]
         result = page(lines, offset, limit)
         warnings = self.label_items([header, *result["rows"]], "productId")
-        return {"as_of": as_of, "chart": header, **result, "warnings": warnings}
+        return continuation({"as_of": as_of, "chart": header, **result, "warnings": warnings},
+                            product_id=product, as_of=as_of, limit=limit)
 
-    def cost(self, product: str, store: str, as_of: str, quantity: float) -> dict:
+    def cost(self, product: str, store: str, as_of: str, quantity: float, restaurant_timezone: str | None = None) -> dict:
+        as_of = self.calendar(restaurant_timezone).timestamp(as_of)
         request = {"productId": product, "storeId": store, "quantityFactor": quantity}
         rows, problems = self.price_rows({product: quantity}, store, as_of)
-        return {"status": "ok" if rows and not problems else "unpriced", "as_of": as_of,
+        if len(rows) != 1 or problems or rows[0].get("productSizeId"):
+            return {"status": "unpriced", "as_of": as_of, "requested": request, "rows": [],
+                    "reason": "iiko did not return one unambiguous cost for this quantity and warehouse."}
+        return {"status": "ok", "as_of": as_of,
                 "basis": "Warehouse accounting cost for the requested quantity, in the organization's currency.",
-                "requested": request, "rows": [selected(r, "productId storeId productSizeId quantityFactor costPrice isEvaluative") for r in rows]}
-
+                "requested": request, "rows": [selected(rows[0], "productId storeId productSizeId quantityFactor costPrice isEvaluative")]}
 
     def price_rows(self, quantities: dict, store: str, as_of: str) -> tuple[list, list]:
         items = [{"productId": key, "quantityFactor": qty, "storeId": store} for key, qty in quantities.items()]
@@ -207,7 +223,9 @@ class CloudReports:
                 raise ValueError("iiko returned an incomplete cost price.")
         return rows, problems
 
-    def recipe_cost(self, product: str, store: str, as_of: str, size: str | None, limit: int, offset: int) -> dict:
+    def recipe_cost(self, product: str, store: str, as_of: str, size: str | None, limit: int, offset: int,
+                    restaurant_timezone: str | None = None) -> dict:
+        as_of = self.calendar(restaurant_timezone).timestamp(as_of, local_date_needed=True)
         accounting_day = datetime.fromisoformat(moment(as_of)).date().isoformat()
         response = object_result(self.read(paths.RECIPE, {"organizationId": self.org, "productId": product,
                                                           "date": accounting_day, "view": "prepared"}))
@@ -274,13 +292,17 @@ class CloudReports:
         estimate_status = "unknown" if missing or any(row.get("isEvaluative") is None for row in prices.values()) else "actual"
         if any(row.get("isEvaluative") is True for row in prices.values()):
             estimate_status = "includes_estimates"
-        return {**context, **result, "warnings": warnings, "status": "unpriced" if missing else "ok",
+        result.update({**context, "warnings": warnings, "status": "unpriced" if missing else "ok",
                 "recipe_yield": str(yield_amount), "missing_or_ambiguous_costs": sorted(missing),
                 "cost_for_recipe_yield": None if missing else str(total),
                 "cost_per_output_unit": None if missing else str(total / yield_amount),
-                "estimate_status": estimate_status}
+                "estimate_status": estimate_status})
+        return continuation(result, product_id=product, store_id=store, product_size_id=size,
+                            as_of=as_of, restaurant_timezone=restaurant_timezone, limit=limit)
 
-    def stock(self, as_of: str, store: str | None, product: str | None, limit: int, offset: int) -> dict:
+    def stock(self, as_of: str, store: str | None, product: str | None, limit: int, offset: int,
+              restaurant_timezone: str | None = None) -> dict:
+        as_of = self.calendar(restaurant_timezone).timestamp(as_of)
         payload = {"organizationId": self.org, "balanceAt": moment(as_of), "shouldIncludeDetails": True,
                    "limit": limit, "offset": offset}
         if store:
@@ -301,29 +323,39 @@ class CloudReports:
                 same_id(row.get("productId"), product, "product")
             details = selected(object_result(row.get("details") or {}), "productName storeName amountUnitId amountUnitName")
             balances.append({**selected(row, "productId storeId quantity costSum"), **details})
-        return {**selected(response, "balanceAt generatedAt currencyCode"), **remote_page(balances, response, offset, limit),
-                "coverage": "iiko returns nonzero quantity or cost balances."}
+        result = remote_page(balances, response, offset, limit)
+        result.update(selected(response, "balanceAt generatedAt currencyCode"))
+        result["coverage"] = "iiko returns nonzero quantity or cost balances."
+        return continuation(result, as_of=as_of, store_id=store, product_id=product, limit=limit)
 
-    def documents(self, kind: str, start: str, end: str, store: str | None, limit: int, offset: int) -> dict:
-        span = date.fromisoformat(day(end)) - date.fromisoformat(day(start))
-        if not 0 <= span.days <= 30:
-            raise ValueError("Request an ordered period of up to 31 days.")
-        payload = {"organizationId": self.org, "from": start, "to": end, "returnFullDetails": False}
-        if store:
-            payload["storeIds"] = [store]
-        rows = _objects(self.read(paths.DOCUMENTS[kind][0], payload), "document list")
+    def documents(self, kind: str, start: str, end: str, store: str | None, limit: int, offset: int,
+                  restaurant_timezone: str | None = None) -> dict:
+        period = self.calendar(restaurant_timezone).resolve(start, end)
         headers = []
-        for row in rows:
-            date_value = row.get("date")
-            if not isinstance(date_value, str) or not start <= day(date_value[:10]) <= end or not row.get("documentId"):
-                raise ValueError("iiko returned a document outside the requested period or without ID.")
+        seen = set()
+        for span in period.windows:
+            first, last = span.start.isoformat(), span.end.isoformat()
+            payload = {"organizationId": self.org, "from": first, "to": last, "returnFullDetails": False}
             if store:
-                stores = row.get("assignedStores") if kind == "invoice" else [row.get("storageFrom")]
-                if not isinstance(stores, list) or store not in stores:
-                    raise ValueError("iiko returned a document outside the requested warehouse.")
-            headers.append(selected(row, DOC_HEADER))
+                payload["storeIds"] = [store]
+            for row in _objects(self.read(paths.DOCUMENTS[kind][0], payload), "document list"):
+                date_value, document_id = row.get("date"), row.get("documentId")
+                if not isinstance(date_value, str) or not first <= day(date_value[:10]) <= last or not isinstance(document_id, str):
+                    raise ValueError("iiko returned a document outside the requested period or without ID.")
+                document_id = str(UUID(document_id))
+                if document_id in seen:
+                    raise ValueError("Duplicate iiko document in the selected period. Retry before reporting totals.")
+                if store:
+                    stores = row.get("assignedStores") if kind == "invoice" else [row.get("storageFrom")]
+                    if not isinstance(stores, list) or store.lower() not in {str(item).lower() for item in stores}:
+                        raise ValueError("iiko returned a document outside the requested warehouse.")
+                seen.add(document_id)
+                headers.append(selected(row, DOC_HEADER))
         headers.sort(key=lambda r: (r["date"], r["documentId"]))
-        return {"kind": kind, "date_from": start, "date_to": end, **page(headers, offset, limit)}
+        result = {"kind": kind, "date_from": period.windows[0].start.isoformat(), "date_to": period.windows[-1].end.isoformat(),
+                "restaurant_timezone": str(period.zone) if period.zone else None, "store_id": store,
+                "includes_open_day": period.includes_today if period.zone is not None else None, **page(headers, offset, limit)}
+        return continuation(result, date_from=result["date_from"], date_to=result["date_to"], store_id=store, limit=limit)
 
     def document(self, kind: str, document: str, section: str, limit: int, offset: int) -> dict:
         if section == "itemsFirstStep" and kind != "stocktake":

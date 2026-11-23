@@ -164,8 +164,8 @@ class ContractFailures(unittest.TestCase):
             self.api.stock(AT, STORE, SALT, 100, 0)
         with self.assertRaisesRegex(ValueError, "offset"):
             self.api.cost(SALT, STORE, DAY, 1)
-        with self.assertRaisesRegex(ValueError, "31 days"):
-            self.api.documents("invoice", DAY, "2026-12-31", None, 10, 0)
+        with self.assertRaisesRegex(ValueError, "366 days"):
+            self.api.documents("invoice", DAY, "2027-12-31", None, 10, 0)
         listing = paths.DOCUMENTS["stocktake"][0]
         self.transport.overrides[listing] = [{"documentId": DOC, "date": DAY, "storageFrom": OTHER}]
         with self.assertRaisesRegex(ValueError, "warehouse"):
