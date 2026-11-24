@@ -28,7 +28,8 @@ async def verify():
     params = tomllib.loads(Path('.codex/config.toml').read_text(encoding='utf-8'))['mcp_servers']['iiko_intelligence']
     async with Client(StdioServerParameters(**params), read_timeout_seconds=15) as client:
         listing = await client.list_tools()
-        assert len(listing.tools) == 19 and all(t.annotations.read_only_hint for t in listing.tools)
+        assert len(listing.tools) == 28
+        assert {t.name for t in listing.tools if not t.annotations.read_only_hint} == {"create_iiko_record", "update_iiko_record"}
         async def call(name, **args):
             reply = await client.call_tool(name, args)
             assert not reply.is_error, reply

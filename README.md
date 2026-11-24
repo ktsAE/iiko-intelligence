@@ -1,15 +1,19 @@
 # iiko Intelligence
 
-iiko Intelligence gives one manager read-only reports on sales, dishes, stock, supplier invoices and write-offs. Use them in local Codex in the ChatGPT desktop app, or create a text report for an ordinary chat. Connect a supported iiko Cloud reporting profile for live answers or load an iikoOffice export for offline reports.
+iiko Intelligence reads restaurant reports and can create and edit supported records through iiko Cloud. Use them in local Codex in the ChatGPT desktop app, or create a text report for an ordinary chat. Connect a supported iiko Cloud reporting profile for live answers or load an iikoOffice export for offline reports.
 
 ## Windows
 
-1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.6.0)
+1. Give the manager the first-install prompt and the installer hash through your usual trusted chat. Local Codex downloads the signed Windows package from GitHub and sets it up under Documents. [Installation prompt](INSTALL.md) · [Windows release](https://github.com/ktsAE/iiko-intelligence/releases/tag/v0.7.0)
 2. Open **Documents → iiko-intelligence** in local Codex and trust the project. Use this same folder for reports and updates. To check the connection, enter `/mcp` and look for `iiko_intelligence`.
 3. Run `Connect-iiko-Cloud.cmd` once to save the restaurant’s single-organization Cloud profile. Then ask **«Какая была выручка вчера?»** or **«Какие отчёты доступны онлайн?»**. The MCP reads sales directly from iiko. Try **«Сравни выручку за прошлую и позапрошлую недели»** or **«Покажи приходные накладные за прошлый квартал»**.
 4. To work from an offline snapshot, run `Import-iiko-report.cmd` with the export described below. For ordinary ChatGPT, double-click `Report-for-ChatGPT.cmd`, review the text file in `reports`, and attach it to a chat. The report contains the selected restaurant, dates, sales by day, top dishes and, when imported, the warehouse valuation. [Windows guide in Russian](WINDOWS.md)
 
-### Updating the manager's connector
+### Working with existing iiko tables
+
+Ask **«Какие типы записей iiko я могу создавать и редактировать?»** to list the 24 implemented entity types and their fields. For example, **«В накладной № 27 за 20 ноября измени комментарий»** or **«В прайс-листе этого поставщика измени цену только у указанной позиции»**. The connector looks up the record and can edit one matching line, append a line, or send an explicitly requested replacement. iiko checks the profile's permissions on each operation. [Record operations and scope](IIKO_DATA.md)
+
+## Updating the manager's connector
 
 While the Windows project is open, the connector checks stable GitHub releases daily and accepts only immutable releases for updates. **«Обнови iiko»** asks local Codex to check immediately. Both installation and update require an RSA-3072/SHA-256 signature from the pinned publisher key. The signed record binds the repository, version, Windows asset name, size, archive digest and installed-file digest. The candidate MCP runs a synthetic health check with a disposable profile and a limited environment. The launcher verifies the selected files on each new launch. The ordinary manager workflow keeps its reports and credentials in the original project.
 

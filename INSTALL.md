@@ -2,12 +2,12 @@
 
 Send the manager the prompt below through your usual trusted chat. Include the installer's SHA-256 in that message. She can paste it into local Codex on her Windows laptop. The installer fetches the signed package and creates the project in her Windows Documents folder.
 
-> Установи iiko Intelligence из релиза ktsAE/iiko-intelligence v0.6.0 на GitHub. Скачай установщик из https://github.com/ktsAE/iiko-intelligence/releases/download/v0.6.0/Install-iiko.ps1 во временную папку. Проверь SHA-256 по значению из моего сообщения. При несовпадении остановись. После проверки запусти установщик с параметром `-ParentDirectory ([Environment]::GetFolderPath('MyDocuments'))`. Проверь MCP и покажи полный путь к проекту. Если там уже есть другая установка, сохрани её и её данные.
+> Установи iiko Intelligence из релиза ktsAE/iiko-intelligence v0.7.0 на GitHub. Скачай установщик из https://github.com/ktsAE/iiko-intelligence/releases/download/v0.7.0/Install-iiko.ps1 во временную папку. Проверь SHA-256 по значению из моего сообщения. При несовпадении остановись. После проверки запусти установщик с параметром `-ParentDirectory ([Environment]::GetFolderPath('MyDocuments'))`. Проверь MCP и покажи полный путь к проекту. Если там уже есть другая установка, сохрани её и её данные.
 
 Publisher reference for this release's `Install-iiko.ps1`:
 
 ```text
-47eb4dc4dc23ba204c967a04e75b3b721fe39e00999244c613f9cebf34daf939
+69811f16a9e86d541262d04bb9c3d819570ea7f399a5a19db6d51dee1392b03f
 ```
 
 Open **Documents → iiko-intelligence** in local Codex and trust this project. Windows may display Documents as **Документы** or redirect it to OneDrive. The installer prints its exact location. The first session uses demo data. Ask **«Проверь подключение к iiko и покажи, какие данные доступны»**.

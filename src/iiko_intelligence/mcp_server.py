@@ -15,6 +15,7 @@ from . import cloud_mcp
 from .cloud_mcp import LIVE_READ, cloud_status, register_cloud_tools
 from .live_sales import LiveSales
 from .report_calendar import preset
+from .record_tools import register_record_tools
 from .config import database_path
 from .manager_reports import compare_periods
 from .sales_snapshot import open_reports
@@ -37,6 +38,12 @@ INSTRUCTIONS = (
     "If iiko cannot determine one time zone, ask the manager and pass "
     "restaurant_timezone. Label the source, organization, dates and currency from the result. "
     "Use get_live_stock, get_incoming_invoices and get_writeoff_acts for current warehouse questions. "
+    "Use describe_iiko_records to find supported tables and fields, list_iiko_records and get_iiko_record to read them. "
+    "For a requested change use create_iiko_record or update_iiko_record. For a line edit match a unique line and pass "
+    "its parent record version. An array in changes replaces all lines. Reuse the same request_id for a retry. "
+    "A report refresh is a read unless the manager asks for a specific write. OLAP reports are derived from source "
+    "records. To reconcile movements, use the saved report or TRANSACTIONS tools and the confirmed accounting scope. "
+    "After an unknown outcome check the original record before making another change. "
     "Use check_live_access for online access checks. Label imported and demo reports explicitly. "
     "When comparing periods, mention missing days or unequal lengths. Explain unavailable metrics without treating them as zero. "
     "For direct iiko requests use the live Cloud tools. Each live result identifies its organization. "
@@ -53,7 +60,7 @@ RowLimit = Annotated[int, Field(ge=1, le=MAX_ROWS)]
 server = MCPServer(
     "iiko-intelligence",
     title="iiko Intelligence",
-    description="Read-only sales, dish, purchasing, stock and write-off information.",
+    description="Restaurant reporting and management of supported iiko records.",
     instructions=INSTRUCTIONS,
     version=__version__,
 )
@@ -73,7 +80,10 @@ def get_capabilities() -> dict[str, Any]:
     result["software_update"] = update_status()
     result["live_cloud"] = {
         **cloud_status(),
-        "methods": ["check_live_access", "get_sales_summary", "get_top_dishes", "compare_sales_periods",
+        "record_edits": "Availability depends on the restaurant permissions for the selected entity and action.",
+        "methods": ["describe_iiko_records", "list_iiko_records", "get_iiko_record", "create_iiko_record", "update_iiko_record",
+                    "list_transaction_fields", "get_transaction_report", "list_saved_iiko_reports", "get_saved_iiko_report",
+                    "check_live_access", "get_sales_summary", "get_top_dishes", "compare_sales_periods",
                     "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_recipe_cost",
                     "get_live_stock", "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document"],
     }
@@ -180,10 +190,11 @@ def get_writeoffs(date_from: str, date_to: str, limit: RowLimit = 20) -> dict[st
 
 
 register_cloud_tools(server)
+register_record_tools(server)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Serve read-only iiko reports over MCP stdio.")
+    parser = argparse.ArgumentParser(description="Serve iiko reports and record operations over MCP stdio.")
     parser.add_argument("--db", type=Path, help="Path to the SQLite snapshot")
     args = parser.parse_args()
     if args.db is not None:

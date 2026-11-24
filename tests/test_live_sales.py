@@ -238,7 +238,7 @@ class Reporting(TestCase):
         for bounds in [(FIRST, "yesterday"), ("today", "yesterday"), (SECOND, FIRST), ("2020-01-01", FIRST)]:
             with self.assertRaises(ValueError):
                 windows(*bounds)
-        self.restaurant.responses.update({s.COLUMNS: ValueError("HTTP 403"), paths.PRODUCTS: {"items": []},
+        self.restaurant.responses.update({s.COLUMNS: ValueError("HTTP 403"), paths.PRESETS: [], paths.PRODUCTS: {"items": []},
             paths.STORES: {"stores": []}, paths.STOCK: {"items": [], "balanceAt": FIRST + "T12:00:00+03:00",
             "organizationId": ORG}, **{listing: [] for listing, _ in paths.DOCUMENTS.values()}})
         result = check_access(self.restaurant.api(), "all", FIRST + "T12:00:00+03:00", None, None)

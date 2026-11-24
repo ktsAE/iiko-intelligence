@@ -6,16 +6,17 @@ from functools import cache
 from typing import Literal
 from uuid import UUID
 
+from . import transaction_reports
 from .report_calendar import RestaurantCalendar
 from .cloud_sales import CloudHTTPError
 from .cloud_reports import CloudReports, moment
 from .live_sales import LiveSales
 
-CheckGroup = Literal["all", "sales", "catalog", "stock", "documents", "recipes"]
+CheckGroup = Literal["all", "sales", "catalog", "stock", "documents", "recipes", "transactions"]
 
 
 def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, product: str | None, store: str | None,
-                 restaurant_timezone: str | None = None) -> dict:
+                 restaurant_timezone: str | None = None, preset_id: str | None = None) -> dict:
     instant = datetime.now(timezone.utc)
     at = moment(as_of) if as_of else instant.isoformat()
     calendar = RestaurantCalendar(api.terminal_timezones, restaurant_timezone, instant)
@@ -52,6 +53,25 @@ def check_access(api: CloudReports, group: CheckGroup, as_of: str | None, produc
         check("get_sales_summary", lambda: sales().summary("yesterday", "yesterday"))
         check("get_top_dishes", lambda: sales().top("yesterday", "yesterday", "sales", 1))
         check("compare_sales_periods", lambda: sales().compare("yesterday", "yesterday", "today", "today", 1))
+
+    if group in ("all", "transactions"):
+        def check_fields():
+            return {"rows": list(transaction_reports.fields(api).values())}
+        catalog = check("list_transaction_fields", check_fields)
+        measure = next((row["name"] for row in catalog.get("rows", []) if row.get("canAggregate") is True
+                        and row.get("type") in {"AMOUNT", "MONEY", "INTEGER", "DECIMAL", "DOUBLE", "NUMBER"}
+                        and "balance" not in row["name"].lower()), None)
+        if measure:
+            check("get_transaction_report", lambda: transaction_reports.transaction_report(
+                api, accounting_day(), accounting_day(), [], [measure], {}, restaurant_timezone, 1, 0, None))
+        else:
+            checks["get_transaction_report"] = {"status": "not_checked", "reason": "No numeric measure found for the sample."}
+        check("list_saved_iiko_reports", lambda: transaction_reports.list_presets(api, "", 1, 0))
+        if preset_id:
+            check("get_saved_iiko_report", lambda: transaction_reports.saved_report(
+                api, preset_id, accounting_day(), accounting_day(), restaurant_timezone, 1, 0, None))
+        else:
+            checks["get_saved_iiko_report"] = {"status": "not_checked", "reason": "Supply the selected preset_id to test its data."}
 
     test_recipes = group in ("all", "recipes")
     sample_product, sample_store = product, store

@@ -1,4 +1,6 @@
 """Only direct read operations offered by the manager connector."""
+PRESETS = "/api/reporting/v1/olap/presets/list"
+PRESET_REPORT = "/api/reporting/v1/olap/presets/get"
 TERMINAL_GROUPS = "/api/1/terminal_groups"
 PRODUCTS = "/api/nomenclature/v2/product/list"
 RECIPE = "/api/nomenclature/v3/assembly-chart/resolve"
@@ -12,6 +14,6 @@ DOCUMENTS = {
     "invoice": ("/api/inventory/v1/incoming_invoice/list", "/api/inventory/v1/incoming_invoice/get"),
     "writeoff": ("/api/inventory/v2/writeoff_document/list", "/api/inventory/v2/writeoff_document/get"),
 }
-LIVE_READ_PATHS = {TERMINAL_GROUPS, PRODUCTS, RECIPE, STORES, COST, STOCK, UNITS, SUPPLIER}
+LIVE_READ_PATHS = {PRESETS, PRESET_REPORT, TERMINAL_GROUPS, PRODUCTS, RECIPE, STORES, COST, STOCK, UNITS, SUPPLIER}
 for listing, detail in DOCUMENTS.values():
     LIVE_READ_PATHS.update((listing, detail))

@@ -14,9 +14,10 @@ from iiko_intelligence.seed import seed_demo
 
 
 EXPECTED_TOOLS = {
+    "describe_iiko_records", "list_iiko_records", "get_iiko_record", "create_iiko_record", "update_iiko_record",
     "find_iiko_products", "list_iiko_stores", "get_recipe_card", "get_item_cost", "get_live_stock", "get_recipe_cost",
     "get_inventory_counts", "get_incoming_invoices", "get_writeoff_acts", "get_iiko_document",
-    "check_live_access",
+    "check_live_access", "list_transaction_fields", "get_transaction_report", "list_saved_iiko_reports", "get_saved_iiko_report",
     "compare_sales_periods",
     "get_capabilities",
     "get_data_status",
@@ -29,12 +30,12 @@ EXPECTED_TOOLS = {
 
 
 class MCPDefinitionTest(unittest.TestCase):
-    def test_only_expected_read_tools_are_registered(self) -> None:
+    def test_only_expected_tools_are_registered(self) -> None:
         tools = asyncio.run(server.list_tools())
         names = {tool.name for tool in tools}
         self.assertEqual(names, EXPECTED_TOOLS)
-        self.assertFalse(any(word in name for name in names for word in ("create", "update", "delete", "raw")))
-        self.assertTrue(all(tool.annotations and tool.annotations.read_only_hint for tool in tools))
+        self.assertEqual({t.name for t in tools if not t.annotations.read_only_hint}, {"create_iiko_record", "update_iiko_record"})
+        self.assertTrue(next(t for t in tools if t.name == "update_iiko_record").annotations.destructive_hint)
 
     def test_tool_schemas_are_bounded(self) -> None:
         tools = {tool.name: tool for tool in asyncio.run(server.list_tools())}

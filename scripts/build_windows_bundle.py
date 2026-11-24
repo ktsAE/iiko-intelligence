@@ -54,6 +54,7 @@ def main() -> None:
             bundle.write(ROOT / "windows/AGENTS.md", package + "AGENTS.md")
             plain = guide.replace("## ", "").replace("# ", "").replace("**", "").replace("`", "")
             bundle.writestr(package + "START-HERE.txt", plain.replace("\n", "\r\n").encode("utf-8-sig"))
+            bundle.write(ROOT / "src/iiko_intelligence/record_schemas.json", package + "src/iiko_intelligence/record_schemas.json")
             for file in sorted((ROOT / "src/iiko_intelligence").glob("*.py")):
                 bundle.write(file, package + file.relative_to(ROOT).as_posix())
             for file in sorted((ROOT / "windows").glob("*.cmd")):

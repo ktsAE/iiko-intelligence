@@ -10,7 +10,7 @@ from uuid import UUID
 from . import cloud_paths as paths
 from .cloud_profile import Profile
 from .report_calendar import RestaurantCalendar
-from .cloud_sales import Post, _object_array, _objects, _post, organization_session
+from .cloud_sales import Post, _object_array, _objects, _post, organization_session, write_record
 
 
 def selected(row: dict, fields: str) -> dict:
@@ -90,6 +90,9 @@ class CloudReports:
 
     def read(self, path: str, payload: dict) -> Any:
         return self.post(path, payload, self.token)
+
+    def write(self, path: str, payload: dict) -> Any:
+        return write_record(path, payload, self.token)
 
     def terminal_timezones(self) -> set[str]:
         response = object_result(self.read(paths.TERMINAL_GROUPS, {"organizationIds": [self.org], "includeDisabled": False}))

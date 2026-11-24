@@ -267,11 +267,12 @@ wheels = [
 
 [[package]]
 name = "iiko-intelligence-trial"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
     { name = "defusedxml" },
+    { name = "jsonschema" },
     { name = "mcp" },
     { name = "openpyxl" },
     { name = "pydantic" },
@@ -284,6 +285,7 @@ dependencies = [
 requires-dist = [
     { name = "cryptography", specifier = "==50.0.2" },
     { name = "defusedxml", specifier = "==0.7.1" },
+    { name = "jsonschema", specifier = "==4.26.0" },
     { name = "mcp", specifier = "==2.3.0" },
     { name = "openpyxl", specifier = "==3.1.5" },
     { name = "pydantic", specifier = ">=2,<3" },

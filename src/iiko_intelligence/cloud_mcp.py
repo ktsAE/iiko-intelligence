@@ -1,6 +1,7 @@
 """Manager-facing live tools for a single configured organization."""
 from __future__ import annotations
 
+import sqlite3
 from typing import Annotated, Any, Callable, Literal
 from uuid import UUID
 
@@ -8,6 +9,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp_types import ToolAnnotations
 from pydantic import Field
 
+from . import transaction_reports
 from .cloud_sales import CloudHTTPError
 from .cloud_checks import CheckGroup, check_access
 from .cloud_profile import configured, read_profile
@@ -19,6 +21,11 @@ Limit = Annotated[int, Field(ge=1, le=100)]
 Offset = Annotated[int, Field(ge=0)]
 Query = Annotated[str, Field(min_length=1, max_length=200)]
 Quantity = Annotated[float, Field(gt=0, allow_inf_nan=False)]
+FieldName = Annotated[str, Field(min_length=1, max_length=160)]
+GroupFields = Annotated[list[FieldName], Field(max_length=16)]
+AmountFields = Annotated[list[FieldName], Field(min_length=1, max_length=8)]
+FilterValues = Annotated[list[Annotated[str, Field(min_length=1, max_length=256)]], Field(min_length=1, max_length=100)]
+SnapshotId = Annotated[str, Field(pattern="^[a-f0-9]{64}$")]
 Kind = Literal["stocktake", "invoice", "writeoff"]
 
 
@@ -43,6 +50,9 @@ def _read_live(report: Callable[[CloudReports], dict]) -> dict[str, Any]:
         return {"source": "iiko Cloud RU", "status": "unavailable", "reason": str(exc), **exc.details}
     except ValueError as exc:
         return {"source": "iiko Cloud RU", "status": "unavailable", "reason": str(exc)}
+    except sqlite3.Error:
+        return {"source": "iiko Cloud RU", "status": "unavailable",
+                "reason": "Unable to verify the local write receipt. Check iiko and reuse the same request_id."}
     except (KeyError, TypeError, ArithmeticError, AttributeError):
         return {"source": "iiko Cloud RU", "status": "unavailable", "reason": "Incomplete or unexpected iiko response."}
 
@@ -53,14 +63,44 @@ def optional_id(value: UUID | None) -> str | None:
 
 def register_cloud_tools(server: MCPServer) -> None:
     @server.tool(annotations=LIVE_READ)
+    def list_transaction_fields(query: str = "", limit: Limit = 50, offset: Offset = 0) -> dict[str, Any]:
+        """Discover transaction OLAP columns, Russian labels and supported grouping, filtering and aggregation.
+        Find the account, amount, operation and reference fields before requesting postings."""
+        return live(lambda api: transaction_reports.list_fields(api, query, limit, offset))
+
+    @server.tool(annotations=LIVE_READ)
+    def get_transaction_report(date_from: str, date_to: str, group_fields: GroupFields, amount_fields: AmountFields,
+                               filters: dict[FieldName, FilterValues] | None = None, restaurant_timezone: str | None = None,
+                               limit: Limit = 50, offset: Offset = 0, snapshot_id: SnapshotId | None = None) -> dict[str, Any]:
+        """Read TRANSACTIONS OLAP for up to 31 inclusive dates. Use actual metadata field names and exact filter values.
+        Select the account, operation, reference and amount fields required by the report. Rows may be aggregated.
+        Follow next_page_arguments until the final page. An account movement alone does not establish a balance."""
+        return live(lambda api: transaction_reports.transaction_report(api, date_from, date_to, group_fields, amount_fields,
+                                                                       filters or {}, restaurant_timezone, limit, offset, snapshot_id))
+
+    @server.tool(annotations=LIVE_READ)
+    def list_saved_iiko_reports(query: str = "", limit: Limit = 50, offset: Offset = 0) -> dict[str, Any]:
+        """Find owner-configured iiko OLAP presets by part of their name. Choose an exact match or ask."""
+        return live(lambda api: transaction_reports.list_presets(api, query, limit, offset))
+
+    @server.tool(annotations=LIVE_READ)
+    def get_saved_iiko_report(preset_id: FieldName, date_from: str, date_to: str, restaurant_timezone: str | None = None,
+                              limit: Limit = 50, offset: Offset = 0, snapshot_id: SnapshotId | None = None) -> dict[str, Any]:
+        """Read data rows of a known saved report for up to 31 inclusive dates. Use the ID returned by the preset list.
+        Presets may group multiple postings. Follow next_page_arguments. Never add intermediate or grand totals to detail."""
+        return live(lambda api: transaction_reports.saved_report(api, preset_id, date_from, date_to, restaurant_timezone,
+                                                                 limit, offset, snapshot_id))
+
+    @server.tool(annotations=LIVE_READ)
     def check_live_access(group: CheckGroup = "all", as_of: str | None = None,
                           product_id: UUID | None = None, store_id: UUID | None = None,
-                          restaurant_timezone: str | None = None) -> dict[str, Any]:
+                          restaurant_timezone: str | None = None, preset_id: FieldName | None = None) -> dict[str, Any]:
         """Test live iiko reads on this restaurant and report each outcome. Sales checks query yesterday and compare it with today.
+        Use transactions to check OLAP posting access. Supply preset_id to test the selected saved report.
         For recipe/cost checks it samples a dish and warehouse unless you supply their IDs. Choose as_of with the restaurant UTC
         offset to check documents on a known day. Without as_of the connector resolves the local day of the restaurant.
         A successful empty list confirms the query ran. A sample document is needed for its detail check."""
-        return live(lambda api: check_access(api, group, as_of, optional_id(product_id), optional_id(store_id), restaurant_timezone))
+        return live(lambda api: check_access(api, group, as_of, optional_id(product_id), optional_id(store_id), restaurant_timezone, preset_id))
 
     @server.tool(annotations=LIVE_READ)
     def find_iiko_products(query: Query, field: Literal["name", "code", "productArticle"] = "name",

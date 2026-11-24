@@ -13,6 +13,7 @@ from mcp import Client
 from mcp.client.stdio import StdioServerParameters
 
 from . import config
+from .record_catalog import WRITE_TOOLS
 from .database import write_lock
 from .seed import seed_demo
 
@@ -40,7 +41,8 @@ async def _verify_connection(database: Path) -> dict[str, Any]:
                 or not result.structured_content.get("stock_snapshot", {}).get("passed", True)
                 or not all(s["passed"] for s in result.structured_content.get("document_sources", {}).values())):
             raise ValueError("the stored dataset failed reconciliation")
-        if not all(tool.annotations and tool.annotations.read_only_hint for tool in tools.tools):
+        if (not all(tool.annotations and tool.annotations.read_only_hint is not None for tool in tools.tools)
+                or {tool.name for tool in tools.tools if not tool.annotations.read_only_hint} != WRITE_TOOLS):
             raise ValueError("the MCP server exposed an unexpected writable tool")
         return {"protocol": client.protocol_version, "tools": sorted(tool.name for tool in tools.tools),
                 "dataset_mode": result.structured_content["dataset_mode"]}

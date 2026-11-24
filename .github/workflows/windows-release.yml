@@ -76,9 +76,13 @@ jobs:
           $result = & "$app\runtime\python.exe" -m iiko_intelligence.cli check-mcp
           if ($LASTEXITCODE -ne 0) { throw 'MCP verification failed.' }
           $status = ($result -join [Environment]::NewLine) | ConvertFrom-Json
-          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 19) { throw 'Unexpected MCP status.' }
+          if ($status.dataset_mode -ne 'synthetic' -or @($status.tools).Count -ne 28) { throw 'Unexpected MCP status.' }
           & "$app\runtime\python.exe" -m unittest discover -s "$env:GITHUB_WORKSPACE\tests" -p test_live_sales.py
           if ($LASTEXITCODE -ne 0) { throw 'Live reporting fixture tests failed in the installed runtime.' }
           & "$app\runtime\python.exe" -m unittest discover -s "$env:GITHUB_WORKSPACE\tests" -p test_reporting_edges.py
           if ($LASTEXITCODE -ne 0) { throw 'Manager calendar and warehouse regression tests failed.' }
-          Write-Output 'Windows install, repeat setup, 19 read-only tools and live reporting fixtures verified.'
+          & "$app\runtime\python.exe" -m unittest discover -s "$env:GITHUB_WORKSPACE\tests" -p test_transactions.py
+          if ($LASTEXITCODE -ne 0) { throw 'Transaction and saved report tests failed.' }
+          & "$app\runtime\python.exe" -m unittest discover -s "$env:GITHUB_WORKSPACE\tests" -p test_records.py
+          if ($LASTEXITCODE -ne 0) { throw 'Record editor tests failed.' }
+          Write-Output 'Windows install, repeat setup, 28 MCP tools and live reporting fixtures verified.'

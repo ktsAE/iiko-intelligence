@@ -11,6 +11,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 from uuid import UUID
 
+from .record_catalog import READ_PATHS, WRITE_PATHS, json_text
 from .cloud_paths import LIVE_READ_PATHS
 from .sales_snapshot import MAX_SALES_ROWS, SalesPeriod, SalesRow, number_units, report_date, report_text
 
@@ -76,12 +77,22 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 def _post(path: str, payload: dict[str, Any], token: str | None) -> Any:
-    if path not in {TOKEN, ORGANIZATIONS, COLUMNS, REPORT} and path not in LIVE_READ_PATHS:
+    if path not in {TOKEN, ORGANIZATIONS, COLUMNS, REPORT} and path not in LIVE_READ_PATHS and path not in READ_PATHS:
         raise ValueError("unsupported iiko Cloud operation")
+    return _request_json(path, payload, token)
+
+
+def write_record(path: str, payload: dict, token: str) -> Any:
+    if path not in WRITE_PATHS or not token:
+        raise ValueError("unsupported iiko Cloud write operation")
+    return _request_json(path, payload, token)
+
+
+def _request_json(path: str, payload: dict, token: str | None) -> Any:
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    request = Request(CLOUD_ORIGIN + path, data=json.dumps(payload).encode(), headers=headers, method="POST")
+    request = Request(CLOUD_ORIGIN + path, data=json_text(payload).encode(), headers=headers, method="POST")
     try:
         with build_opener(ProxyHandler({}), _NoRedirect()).open(request, timeout=30) as response:
             raw = response.read(MAX_RESPONSE_BYTES + 1)

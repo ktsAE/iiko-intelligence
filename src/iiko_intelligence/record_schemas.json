@@ -1,0 +1,5429 @@
+{
+  "definitions": {
+    "AssemblyChartItemV3": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "packageCount": {
+          "type": "number"
+        },
+        "packageTypeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSizeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "quantityIn": {
+          "type": "number"
+        },
+        "quantityIn1": {
+          "type": "number"
+        },
+        "quantityIn2": {
+          "type": "number"
+        },
+        "quantityIn3": {
+          "type": "number"
+        },
+        "quantityMiddle": {
+          "type": "number"
+        },
+        "quantityOut": {
+          "type": "number"
+        },
+        "quantityOut1": {
+          "type": "number"
+        },
+        "quantityOut2": {
+          "type": "number"
+        },
+        "quantityOut3": {
+          "type": "number"
+        },
+        "sortWeight": {
+          "type": "integer"
+        },
+        "storeSpecification": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/StoreSpecificationV3"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "AssemblyChartListRequestV3": {
+      "additionalProperties": false,
+      "properties": {
+        "dateFrom": {
+          "type": "string"
+        },
+        "dateTo": {
+          "type": "string"
+        },
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_document_assembly_chart_v3.Filter"
+          },
+          "type": "array"
+        },
+        "includeDeletedProducts": {
+          "type": "boolean"
+        },
+        "includePreparedCharts": {
+          "type": "boolean"
+        },
+        "knownRevision": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "DisassembleDocumentCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "mainProductAmountPercent": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "mainProductAmountPercent",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "GetByIDRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "documentId",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "GetCounteragentRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "counteragentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragentId",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "GetCounteragentsRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "type": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "GetPriceListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "counteragentId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragentId"
+      ],
+      "type": "object"
+    },
+    "GetRequestV3": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IncomingInventoryCreateFirstStepItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "IncomingInventoryCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "containerCount": {
+          "type": "number"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isDisassembled": {
+          "type": "boolean"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "IncomingInvoiceRequestItem": {
+      "additionalProperties": false,
+      "properties": {
+        "actualAmount": {
+          "type": "number"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "customsDeclarationNumber": {
+          "type": "string"
+        },
+        "isAdditionalExpense": {
+          "type": "boolean"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "supplierProduct": {
+          "type": "string"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "store"
+      ],
+      "type": "object"
+    },
+    "IncomingReturnedInvoiceCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountFactor": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "customsDeclarationNumber": {
+          "type": "string"
+        },
+        "discountSum": {
+          "type": "number"
+        },
+        "incomePrice": {
+          "type": "number"
+        },
+        "incomeSum": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "supplierProduct": {
+          "type": "string"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "store"
+      ],
+      "type": "object"
+    },
+    "IncomingServiceCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "splitVat": {
+          "type": "boolean"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "revenueAccount",
+        "vatPercent"
+      ],
+      "type": "object"
+    },
+    "IndependentPriceListItemRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "allowablePriceDeviation": {
+          "type": "number"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "nativeProductId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "IndependentPriceListListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "InternalTransferCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "ListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "returnFullDetails": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "storeIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "organizationId",
+        "to"
+      ],
+      "type": "object"
+    },
+    "NomenclatureCategoryListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "includeDeleted": {
+          "type": "boolean"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureGroupCustomCategory": {
+      "additionalProperties": false,
+      "properties": {
+        "categoryListId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "categoryValueId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureGroupListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_document_nomenclature_group_v2.Filter"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "filters",
+        "limit",
+        "offset"
+      ],
+      "type": "object"
+    },
+    "NomenclatureGroupMarkupSetting": {
+      "additionalProperties": false,
+      "properties": {
+        "markupPercent": {
+          "type": "number"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "NomenclatureGroupOrganizationFilter": {
+      "additionalProperties": false,
+      "properties": {
+        "isExcluding": {
+          "type": "boolean"
+        },
+        "organizationIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureGroupRGBColor": {
+      "additionalProperties": false,
+      "properties": {
+        "blue": {
+          "type": "integer"
+        },
+        "green": {
+          "type": "integer"
+        },
+        "red": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureGroupStoreBalanceLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "storeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "valueAssigned": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "storeId"
+      ],
+      "type": "object"
+    },
+    "NomenclatureProductBarcode": {
+      "additionalProperties": false,
+      "properties": {
+        "barcode": {
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "barcode",
+        "type"
+      ],
+      "type": "object"
+    },
+    "NomenclatureProductChildModifier": {
+      "additionalProperties": false,
+      "properties": {
+        "childModifiers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductChildModifier"
+          },
+          "type": "array"
+        },
+        "childModifiersHaveMinMaxRestrictions": {
+          "type": "boolean"
+        },
+        "defaultAmount": {
+          "type": "integer"
+        },
+        "freeOfChargeAmount": {
+          "type": "integer"
+        },
+        "hideIfDefaultAmount": {
+          "type": "boolean"
+        },
+        "maximumAmount": {
+          "type": "integer"
+        },
+        "minimumAmount": {
+          "type": "integer"
+        },
+        "modifierId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "splittable": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductContainer": {
+      "additionalProperties": false,
+      "properties": {
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerWeight": {
+          "type": "number"
+        },
+        "franchiseMasterId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "franchiseUniqueId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "fullContainerWeight": {
+          "type": "number"
+        },
+        "isDeleted": {
+          "type": "boolean"
+        },
+        "lineNumber": {
+          "type": "string"
+        },
+        "maxContainerWeight": {
+          "type": "number"
+        },
+        "minContainerWeight": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "useInFront": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductCustomCategory": {
+      "additionalProperties": false,
+      "properties": {
+        "categoryListId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "categoryValueId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductDayTime": {
+      "additionalProperties": false,
+      "properties": {
+        "minutes": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductImage": {
+      "additionalProperties": false,
+      "properties": {
+        "endAt": {
+          "type": "string"
+        },
+        "imageId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "startAt": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_document_nomenclature_product_v2.Filter"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductMarkupSetting": {
+      "additionalProperties": false,
+      "properties": {
+        "markupPercent": {
+          "type": "number"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "NomenclatureProductModifier": {
+      "additionalProperties": false,
+      "properties": {
+        "childModifiers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductChildModifier"
+          },
+          "type": "array"
+        },
+        "childModifiersHaveMinMaxRestrictions": {
+          "type": "boolean"
+        },
+        "defaultAmount": {
+          "type": "integer"
+        },
+        "freeOfChargeAmount": {
+          "type": "integer"
+        },
+        "hideIfDefaultAmount": {
+          "type": "boolean"
+        },
+        "maximumAmount": {
+          "type": "integer"
+        },
+        "minimumAmount": {
+          "type": "integer"
+        },
+        "modifierId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "splittable": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductModifierSchemaRedefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "childModifiers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductChildModifier"
+          },
+          "type": "array"
+        },
+        "defaultAmount": {
+          "type": "integer"
+        },
+        "freeOfChargeAmount": {
+          "type": "integer"
+        },
+        "maximumAmount": {
+          "type": "integer"
+        },
+        "minimumAmount": {
+          "type": "integer"
+        },
+        "modifierId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductNutritionValue": {
+      "additionalProperties": false,
+      "properties": {
+        "carbohydrateAmount": {
+          "type": "number"
+        },
+        "energyAmount": {
+          "type": "number"
+        },
+        "fatAmount": {
+          "type": "number"
+        },
+        "nutritionComponents": {
+          "additionalProperties": {
+            "format": "float64",
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "organizationIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "productSizeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "proteinAmount": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductRGBColor": {
+      "additionalProperties": false,
+      "properties": {
+        "blue": {
+          "type": "integer"
+        },
+        "green": {
+          "type": "integer"
+        },
+        "red": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductRate": {
+      "additionalProperties": false,
+      "properties": {
+        "intervals": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductRateInterval"
+          },
+          "type": "array"
+        },
+        "serviceRate": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductRateInterval": {
+      "additionalProperties": false,
+      "properties": {
+        "begin": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductDayTime"
+            }
+          ]
+        },
+        "dayOfWeek": {
+          "type": "string"
+        },
+        "end": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductDayTime"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductRateSchedule": {
+      "additionalProperties": false,
+      "properties": {
+        "rates": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductRate"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductSizeFactors": {
+      "additionalProperties": false,
+      "properties": {
+        "factors": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "NomenclatureProductStoreBalanceLevel": {
+      "additionalProperties": false,
+      "properties": {
+        "storeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "valueAssigned": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "storeId"
+      ],
+      "type": "object"
+    },
+    "OutgoingInvoiceRequestItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "discountSum": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "store"
+      ],
+      "type": "object"
+    },
+    "OutgoingServiceCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "discountSum": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "splitVat": {
+          "type": "boolean"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "revenueAccount",
+        "vatPercent"
+      ],
+      "type": "object"
+    },
+    "ProductSizeCreateFields": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "shortName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ProductSizeGetRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ProductSizeListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_entities_product_size.Filter"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "ProductSizeUpdateFields": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "boolean"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "shortName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ProductionDocumentCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "ReturnedInvoiceCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "customsDeclarationNumber": {
+          "type": "string"
+        },
+        "discountSum": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "supplierProduct": {
+          "type": "string"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product",
+        "store"
+      ],
+      "type": "object"
+    },
+    "SalesDocumentCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "discountSum": {
+          "type": "number"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "price": {
+          "type": "number"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "sum": {
+          "type": "number"
+        },
+        "vatPercent": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "StoreSpecificationV3": {
+      "additionalProperties": false,
+      "properties": {
+        "inverse": {
+          "type": "boolean"
+        },
+        "organizationIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "SubstitutionRecordCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "SupplierPriceListItemRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "allowablePriceDeviation": {
+          "type": "number"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "nativeProductId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "supplierProductId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "TransformationDocumentCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "WriteoffDocumentCreateItem": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "containerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "num": {
+          "type": "integer"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSize": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "num",
+        "product"
+      ],
+      "type": "object"
+    },
+    "account.create": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "isCustomTransactionsAllowed": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "startBalanceDate": {
+          "type": "string"
+        },
+        "startBalanceSum": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "name",
+        "startBalanceDate",
+        "startBalanceSum",
+        "type"
+      ],
+      "type": "object"
+    },
+    "account.update": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "startBalanceDate": {
+          "type": "string"
+        },
+        "startBalanceSum": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "id",
+        "name",
+        "startBalanceDate",
+        "startBalanceSum",
+        "type"
+      ],
+      "type": "object"
+    },
+    "cash_flow_category.create": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "cash_flow_category.update": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "id",
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "counterparty.create": {
+      "additionalProperties": false,
+      "properties": {
+        "actualAddress": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "bank": {
+          "type": "string"
+        },
+        "bankCity": {
+          "type": "string"
+        },
+        "bik": {
+          "type": "string"
+        },
+        "cellPhone": {
+          "type": "string"
+        },
+        "client": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "correspondentAccount": {
+          "type": "string"
+        },
+        "departmentCodes": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "email": {
+          "type": "string"
+        },
+        "employee": {
+          "type": "boolean"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gln": {
+          "type": "string"
+        },
+        "iban": {
+          "type": "string"
+        },
+        "inn": {
+          "type": "string"
+        },
+        "kpp": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "legalAddress": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "okdp": {
+          "type": "string"
+        },
+        "okpo": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "preferredDepartmentCode": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "registrationNumber": {
+          "type": "string"
+        },
+        "responsibleForDepartmentCodes": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "settlementAccount": {
+          "type": "string"
+        },
+        "snils": {
+          "type": "string"
+        },
+        "supplier": {
+          "type": "boolean"
+        },
+        "supplierType": {
+          "type": "string"
+        },
+        "swiftBic": {
+          "type": "string"
+        },
+        "taxpayerIdNumber": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "counterparty.update": {
+      "additionalProperties": false,
+      "properties": {
+        "actualAddress": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "bank": {
+          "type": "string"
+        },
+        "bankCity": {
+          "type": "string"
+        },
+        "bik": {
+          "type": "string"
+        },
+        "cellPhone": {
+          "type": "string"
+        },
+        "client": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "company": {
+          "type": "string"
+        },
+        "correspondentAccount": {
+          "type": "string"
+        },
+        "counteragentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "departmentCodes": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "email": {
+          "type": "string"
+        },
+        "employee": {
+          "type": "boolean"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gln": {
+          "type": "string"
+        },
+        "iban": {
+          "type": "string"
+        },
+        "inn": {
+          "type": "string"
+        },
+        "kpp": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "legalAddress": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "okdp": {
+          "type": "string"
+        },
+        "okpo": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "preferredDepartmentCode": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "registrationNumber": {
+          "type": "string"
+        },
+        "responsibleForDepartmentCodes": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "settlementAccount": {
+          "type": "string"
+        },
+        "snils": {
+          "type": "string"
+        },
+        "supplier": {
+          "type": "boolean"
+        },
+        "supplierType": {
+          "type": "string"
+        },
+        "swiftBic": {
+          "type": "string"
+        },
+        "taxpayerIdNumber": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "counteragentId",
+        "name",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "disassembly.create": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/DisassembleDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "items",
+        "organizationId",
+        "product",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "disassembly.update": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/DisassembleDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "product",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "incoming_invoice.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "deliveryOnTime": {
+          "type": "boolean"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "employeePassToAccount": {
+          "type": "string"
+        },
+        "incomingDate": {
+          "type": "string"
+        },
+        "incomingDocumentNumber": {
+          "type": "string"
+        },
+        "internalOutgoingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "invoice": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingInvoiceRequestItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "transportInvoiceNumber": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "incoming_invoice.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "deliveryOnTime": {
+          "type": "boolean"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "employeePassToAccount": {
+          "type": "string"
+        },
+        "incomingDate": {
+          "type": "string"
+        },
+        "incomingDocumentNumber": {
+          "type": "string"
+        },
+        "internalOutgoingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "invoice": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingInvoiceRequestItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "transportInvoiceNumber": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "incoming_return.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingReturnedInvoiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "outgoingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "processingMode": {
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId",
+        "processingMode"
+      ],
+      "type": "object"
+    },
+    "incoming_return.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingReturnedInvoiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "outgoingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "processingMode": {
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "processingMode"
+      ],
+      "type": "object"
+    },
+    "incoming_service.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "contractNumber": {
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "employeePassToAccount": {
+          "type": "string"
+        },
+        "incomingDate": {
+          "type": "string"
+        },
+        "incomingDocumentNumber": {
+          "type": "string"
+        },
+        "invoice": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingServiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "incoming_service.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "contractNumber": {
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "employeePassToAccount": {
+          "type": "string"
+        },
+        "incomingDate": {
+          "type": "string"
+        },
+        "incomingDocumentNumber": {
+          "type": "string"
+        },
+        "invoice": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingServiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "internal_document_assembly_chart_v3.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_document_nomenclature_group_v2.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_document_nomenclature_product_v2.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_entities_product_size.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {},
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_finance_accounts.AccountGetRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "internal_finance_accounts.AccountListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_finance_accounts.Filter"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "filters",
+        "limit",
+        "offset"
+      ],
+      "type": "object"
+    },
+    "internal_finance_accounts.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_finance_cashflowcategories.CashFlowCategoryGetRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "internal_finance_cashflowcategories.CashFlowCategoryListRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/internal_finance_cashflowcategories.Filter"
+          },
+          "type": "array"
+        },
+        "limit": {
+          "type": "integer"
+        },
+        "offset": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "filters",
+        "limit",
+        "offset"
+      ],
+      "type": "object"
+    },
+    "internal_finance_cashflowcategories.Filter": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {},
+        "values": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "internal_price_list.create": {
+      "additionalProperties": false,
+      "properties": {
+        "dateFrom": {
+          "format": "date",
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": "string"
+        },
+        "defaultDeviationAction": {
+          "enum": [
+            "DISABLE_GREATER",
+            "DISABLE",
+            "NOTIFY",
+            "NOT_NOTIFY"
+          ],
+          "type": "string"
+        },
+        "deleteWithSameDate": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IndependentPriceListItemRequest"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "saveWithErrors": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dateFrom",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "internal_price_list.update": {
+      "additionalProperties": false,
+      "properties": {
+        "dateFrom": {
+          "format": "date",
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": "string"
+        },
+        "defaultDeviationAction": {
+          "enum": [
+            "DISABLE_GREATER",
+            "DISABLE",
+            "NOTIFY",
+            "NOT_NOTIFY"
+          ],
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IndependentPriceListItemRequest"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "priceListId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "saveWithErrors": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dateFrom",
+        "items",
+        "organizationId",
+        "priceListId"
+      ],
+      "type": "object"
+    },
+    "internal_transfer.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/InternalTransferCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "items",
+        "organizationId",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "internal_transfer.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/InternalTransferCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "inventory_count.create": {
+      "additionalProperties": false,
+      "properties": {
+        "accountShortage": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "accountSurplus": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingInventoryCreateItem"
+          },
+          "type": "array"
+        },
+        "itemsFirstStep": {
+          "items": {
+            "$ref": "#/definitions/IncomingInventoryCreateFirstStepItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "items",
+        "itemsFirstStep",
+        "organizationId",
+        "store"
+      ],
+      "type": "object"
+    },
+    "inventory_count.update": {
+      "additionalProperties": false,
+      "properties": {
+        "accountShortage": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "accountSurplus": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/IncomingInventoryCreateItem"
+          },
+          "type": "array"
+        },
+        "itemsFirstStep": {
+          "items": {
+            "$ref": "#/definitions/IncomingInventoryCreateFirstStepItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "store": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "documentId",
+        "items",
+        "itemsFirstStep",
+        "number",
+        "organizationId",
+        "store"
+      ],
+      "type": "object"
+    },
+    "outgoing_invoice.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "internalIncomingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/OutgoingInvoiceRequestItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "outgoing_invoice.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "internalIncomingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/OutgoingInvoiceRequestItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "outgoing_service.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "contractNumber": {
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/OutgoingServiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "outgoing_service.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "contractDate": {
+          "type": "string"
+        },
+        "contractNumber": {
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/OutgoingServiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "product.create": {
+      "additionalProperties": false,
+      "properties": {
+        "accountingCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "alcoholClass": {
+          "type": "string"
+        },
+        "allergenGroupIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "amountIndependentOfParentAmount": {
+          "type": "boolean"
+        },
+        "amountUnitId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "barcodes": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductBarcode"
+          },
+          "type": "array"
+        },
+        "canBuyFromCashdesk": {
+          "type": "boolean"
+        },
+        "canChangeAmountCookedDish": {
+          "type": "boolean"
+        },
+        "canSetOpenPrice": {
+          "type": "boolean"
+        },
+        "categoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "chequePrintable": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "coldLossPercent": {
+          "type": "number"
+        },
+        "color": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRGBColor"
+            }
+          ]
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductContainer"
+          },
+          "type": "array"
+        },
+        "cookWithMainDish": {
+          "type": "boolean"
+        },
+        "cookingTimeNormal": {
+          "type": "integer"
+        },
+        "cookingTimePeak": {
+          "type": "integer"
+        },
+        "cookingType": {
+          "type": "string"
+        },
+        "customCategories": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductCustomCategory"
+          },
+          "type": "array"
+        },
+        "defaultContainerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "defaultCourse": {
+          "type": "integer"
+        },
+        "defaultIncludedInMenu": {
+          "type": "boolean"
+        },
+        "defaultMaximumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultMinimumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultSalePrice": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptionEnglish": {
+          "type": "string"
+        },
+        "disabledProductSizeIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "egaisAlcCode": {
+          "type": "string"
+        },
+        "estimatedPurchasePrice": {
+          "type": "number"
+        },
+        "excludedSectionIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "expirationDate": {
+          "type": "integer"
+        },
+        "fontColor": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRGBColor"
+            }
+          ]
+        },
+        "frontImageId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "fullNameEnglish": {
+          "type": "string"
+        },
+        "gtin": {
+          "type": "string"
+        },
+        "hotLossPercent": {
+          "type": "number"
+        },
+        "images": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductImage"
+          },
+          "type": "array"
+        },
+        "invoiceSupplierId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isCalculateUnitWeight": {
+          "type": "boolean"
+        },
+        "isDishOfDay": {
+          "type": "boolean"
+        },
+        "isFixedPrice": {
+          "type": "boolean"
+        },
+        "isFlyerProgram": {
+          "type": "boolean"
+        },
+        "isNotInStoreMovement": {
+          "type": "boolean"
+        },
+        "isNutritionValueAutoCalculated": {
+          "type": "boolean"
+        },
+        "isPercentageOfAlcoholApplicable": {
+          "type": "boolean"
+        },
+        "isTimePayProduct": {
+          "type": "boolean"
+        },
+        "itemCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "markupSettings": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductMarkupSetting"
+          },
+          "type": "array"
+        },
+        "maximumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumTimePayProductDurationMinutes": {
+          "type": "integer"
+        },
+        "modifierSchemaId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "modifierSchemaRedefinitions": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductModifierSchemaRedefinition"
+          },
+          "type": "array"
+        },
+        "modifiers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductModifier"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nameEnglish": {
+          "type": "string"
+        },
+        "nameKitchen": {
+          "type": "string"
+        },
+        "nutritionValues": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductNutritionValue"
+          },
+          "type": "array"
+        },
+        "outerEconomicActivityNomenclatureCode": {
+          "type": "string"
+        },
+        "parentGroupId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "percentageOfAlcohol": {
+          "type": "number"
+        },
+        "placeTypeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "prechequePrintable": {
+          "type": "boolean"
+        },
+        "priceMarkupPercent": {
+          "type": "number"
+        },
+        "printOnAdd": {
+          "type": "boolean"
+        },
+        "producerIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "productArticle": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productScaleId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSizeFactors": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductSizeFactors"
+            }
+          ]
+        },
+        "productTagIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "productTypeForCooking": {
+          "type": "string"
+        },
+        "rateSchedule": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRateSchedule"
+            }
+          ]
+        },
+        "relativeRateSchedule": {
+          "type": "boolean"
+        },
+        "sourceNature": {
+          "type": "string"
+        },
+        "taxCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "timePayProductDurationStepMinutes": {
+          "type": "integer"
+        },
+        "transferType": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unitCapacity": {
+          "type": "number"
+        },
+        "unitWeight": {
+          "type": "number"
+        },
+        "useBalanceForInventory": {
+          "type": "boolean"
+        },
+        "useBalanceForSell": {
+          "type": "boolean"
+        },
+        "useDefaultCookingTime": {
+          "type": "boolean"
+        },
+        "useRangeForInvoices": {
+          "type": "boolean"
+        },
+        "uzFiscalCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amountUnitId",
+        "code",
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "product.update": {
+      "additionalProperties": false,
+      "properties": {
+        "accountingCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "alcoholClass": {
+          "type": "string"
+        },
+        "allergenGroupIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "amountIndependentOfParentAmount": {
+          "type": "boolean"
+        },
+        "amountUnitId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "barcodes": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductBarcode"
+          },
+          "type": "array"
+        },
+        "canBuyFromCashdesk": {
+          "type": "boolean"
+        },
+        "canChangeAmountCookedDish": {
+          "type": "boolean"
+        },
+        "canSetOpenPrice": {
+          "type": "boolean"
+        },
+        "categoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "chequePrintable": {
+          "type": "boolean"
+        },
+        "code": {
+          "type": "string"
+        },
+        "coldLossPercent": {
+          "type": "number"
+        },
+        "color": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRGBColor"
+            }
+          ]
+        },
+        "containers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductContainer"
+          },
+          "type": "array"
+        },
+        "cookWithMainDish": {
+          "type": "boolean"
+        },
+        "cookingTimeNormal": {
+          "type": "integer"
+        },
+        "cookingTimePeak": {
+          "type": "integer"
+        },
+        "cookingType": {
+          "type": "string"
+        },
+        "customCategories": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductCustomCategory"
+          },
+          "type": "array"
+        },
+        "defaultContainerId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "defaultCourse": {
+          "type": "integer"
+        },
+        "defaultIncludedInMenu": {
+          "type": "boolean"
+        },
+        "defaultMaximumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultMinimumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultSalePrice": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptionEnglish": {
+          "type": "string"
+        },
+        "disabledProductSizeIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "egaisAlcCode": {
+          "type": "string"
+        },
+        "estimatedPurchasePrice": {
+          "type": "number"
+        },
+        "excludedSectionIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "expirationDate": {
+          "type": "integer"
+        },
+        "fontColor": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRGBColor"
+            }
+          ]
+        },
+        "frontImageId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "fullName": {
+          "type": "string"
+        },
+        "fullNameEnglish": {
+          "type": "string"
+        },
+        "gtin": {
+          "type": "string"
+        },
+        "hotLossPercent": {
+          "type": "number"
+        },
+        "images": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductImage"
+          },
+          "type": "array"
+        },
+        "invoiceSupplierId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isCalculateUnitWeight": {
+          "type": "boolean"
+        },
+        "isDishOfDay": {
+          "type": "boolean"
+        },
+        "isFixedPrice": {
+          "type": "boolean"
+        },
+        "isFlyerProgram": {
+          "type": "boolean"
+        },
+        "isNotInStoreMovement": {
+          "type": "boolean"
+        },
+        "isNutritionValueAutoCalculated": {
+          "type": "boolean"
+        },
+        "isPercentageOfAlcoholApplicable": {
+          "type": "boolean"
+        },
+        "isTimePayProduct": {
+          "type": "boolean"
+        },
+        "itemCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "markupSettings": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductMarkupSetting"
+          },
+          "type": "array"
+        },
+        "maximumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumTimePayProductDurationMinutes": {
+          "type": "integer"
+        },
+        "modifierSchemaId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "modifierSchemaRedefinitions": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductModifierSchemaRedefinition"
+          },
+          "type": "array"
+        },
+        "modifiers": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductModifier"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nameEnglish": {
+          "type": "string"
+        },
+        "nameKitchen": {
+          "type": "string"
+        },
+        "nutritionValues": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureProductNutritionValue"
+          },
+          "type": "array"
+        },
+        "outerEconomicActivityNomenclatureCode": {
+          "type": "string"
+        },
+        "parentGroupId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "percentageOfAlcohol": {
+          "type": "number"
+        },
+        "placeTypeId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "prechequePrintable": {
+          "type": "boolean"
+        },
+        "priceMarkupPercent": {
+          "type": "number"
+        },
+        "printOnAdd": {
+          "type": "boolean"
+        },
+        "producerIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "productArticle": {
+          "type": "string"
+        },
+        "productId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productScaleId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSizeFactors": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductSizeFactors"
+            }
+          ]
+        },
+        "productTagIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "productTypeForCooking": {
+          "type": "string"
+        },
+        "rateSchedule": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureProductRateSchedule"
+            }
+          ]
+        },
+        "relativeRateSchedule": {
+          "type": "boolean"
+        },
+        "sourceNature": {
+          "type": "string"
+        },
+        "taxCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "timePayProductDurationStepMinutes": {
+          "type": "integer"
+        },
+        "transferType": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unitCapacity": {
+          "type": "number"
+        },
+        "unitWeight": {
+          "type": "number"
+        },
+        "useBalanceForInventory": {
+          "type": "boolean"
+        },
+        "useBalanceForSell": {
+          "type": "boolean"
+        },
+        "useDefaultCookingTime": {
+          "type": "boolean"
+        },
+        "useRangeForInvoices": {
+          "type": "boolean"
+        },
+        "uzFiscalCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "amountUnitId",
+        "code",
+        "name",
+        "productId",
+        "type"
+      ],
+      "type": "object"
+    },
+    "product_category.create": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "product_category.update": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "type": "object"
+    },
+    "product_group.create": {
+      "additionalProperties": false,
+      "properties": {
+        "accountingCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "categoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "color": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupRGBColor"
+            }
+          ]
+        },
+        "customCategories": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupCustomCategory"
+          },
+          "type": "array"
+        },
+        "defaultCourse": {
+          "type": "integer"
+        },
+        "defaultMaximumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultMinimumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "fontColor": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupRGBColor"
+            }
+          ]
+        },
+        "frontImageId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "groupArticle": {
+          "type": "string"
+        },
+        "groupId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "includeInReport": {
+          "type": "boolean"
+        },
+        "isFixedPrice": {
+          "type": "boolean"
+        },
+        "markupSettings": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupMarkupSetting"
+          },
+          "type": "array"
+        },
+        "maximumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "priceMarkupPercent": {
+          "type": "number"
+        },
+        "taxCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "visibilityFilter": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupOrganizationFilter"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "name"
+      ],
+      "type": "object"
+    },
+    "product_group.update": {
+      "additionalProperties": false,
+      "properties": {
+        "accountingCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "categoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "color": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupRGBColor"
+            }
+          ]
+        },
+        "customCategories": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupCustomCategory"
+          },
+          "type": "array"
+        },
+        "defaultCourse": {
+          "type": "integer"
+        },
+        "defaultMaximumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "defaultMinimumStoreBalanceLevel": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "fontColor": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupRGBColor"
+            }
+          ]
+        },
+        "frontImageId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "groupArticle": {
+          "type": "string"
+        },
+        "groupId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "includeInReport": {
+          "type": "boolean"
+        },
+        "isFixedPrice": {
+          "type": "boolean"
+        },
+        "markupSettings": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupMarkupSetting"
+          },
+          "type": "array"
+        },
+        "maximumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "minimumStoreBalanceLevels": {
+          "items": {
+            "$ref": "#/definitions/NomenclatureGroupStoreBalanceLevel"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "priceMarkupPercent": {
+          "type": "number"
+        },
+        "taxCategoryId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "visibilityFilter": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/NomenclatureGroupOrganizationFilter"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "groupId",
+        "name"
+      ],
+      "type": "object"
+    },
+    "product_scale.create": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "productSizes": {
+          "items": {
+            "$ref": "#/definitions/ProductSizeCreateFields"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "product_scale.update": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "productSizes": {
+          "items": {
+            "$ref": "#/definitions/ProductSizeUpdateFields"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "type": "object"
+    },
+    "production.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/ProductionDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "items",
+        "organizationId",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "production.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/ProductionDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "recipe.create": {
+      "additionalProperties": false,
+      "properties": {
+        "appearance": {
+          "type": "string"
+        },
+        "assembledQuantity": {
+          "type": "number"
+        },
+        "dateFrom": {
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "directWriteoffStoreSpecification": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/StoreSpecificationV3"
+            }
+          ]
+        },
+        "franchiseMasterId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "franchiseOriginalId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "franchiseUniqueId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/AssemblyChartItemV3"
+          },
+          "type": "array"
+        },
+        "organoleptic": {
+          "type": "string"
+        },
+        "outputComment": {
+          "type": "string"
+        },
+        "picture": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSizeAssemblyStrategy": {
+          "type": "string"
+        },
+        "technologyDescription": {
+          "type": "string"
+        },
+        "versionCompatibility": {
+          "type": "string"
+        },
+        "writeoffStrategy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "dateFrom",
+        "dateTo",
+        "productId"
+      ],
+      "type": "object"
+    },
+    "recipe.update": {
+      "additionalProperties": false,
+      "properties": {
+        "appearance": {
+          "type": "string"
+        },
+        "assembledQuantity": {
+          "type": "number"
+        },
+        "dateFrom": {
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "directWriteoffStoreSpecification": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/StoreSpecificationV3"
+            }
+          ]
+        },
+        "franchiseMasterId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "franchiseOriginalId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "franchiseUniqueId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/AssemblyChartItemV3"
+          },
+          "type": "array"
+        },
+        "organoleptic": {
+          "type": "string"
+        },
+        "outputComment": {
+          "type": "string"
+        },
+        "picture": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "productSizeAssemblyStrategy": {
+          "type": "string"
+        },
+        "technologyDescription": {
+          "type": "string"
+        },
+        "versionCompatibility": {
+          "type": "string"
+        },
+        "writeoffStrategy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "dateFrom",
+        "dateTo",
+        "id",
+        "productId"
+      ],
+      "type": "object"
+    },
+    "sales_document.create": {
+      "additionalProperties": false,
+      "properties": {
+        "banquet": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SalesDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "sales_document.update": {
+      "additionalProperties": false,
+      "properties": {
+        "banquet": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SalesDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "revenueAccount": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "substitution.create": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "assemblyChartWriteoff": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SubstitutionRecordCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "amountUnit",
+        "date",
+        "items",
+        "organizationId",
+        "product",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "substitution.update": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "assemblyChartWriteoff": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SubstitutionRecordCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "amountUnit",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "product",
+        "storageFrom",
+        "storageTo"
+      ],
+      "type": "object"
+    },
+    "supplier_price_list.create": {
+      "additionalProperties": false,
+      "properties": {
+        "counteragentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dateFrom": {
+          "format": "date",
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": "string"
+        },
+        "deleteWithSameDate": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SupplierPriceListItemRequest"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "saveWithErrors": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "counteragentId",
+        "dateFrom",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "supplier_price_list.update": {
+      "additionalProperties": false,
+      "properties": {
+        "counteragentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "dateFrom": {
+          "format": "date",
+          "type": "string"
+        },
+        "dateTo": {
+          "format": "date",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/SupplierPriceListItemRequest"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "priceListId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "saveWithErrors": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "counteragentId",
+        "dateFrom",
+        "items",
+        "organizationId",
+        "priceListId"
+      ],
+      "type": "object"
+    },
+    "supplier_return.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "incomingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/ReturnedInvoiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "items",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "supplier_return.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "counteragent": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "defaultStore": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "incomingInvoiceId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/ReturnedInvoiceCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "counteragent",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId"
+      ],
+      "type": "object"
+    },
+    "transformation.create": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "assemblyChartWriteoff": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/TransformationDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storeFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storeTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "amountUnit",
+        "date",
+        "items",
+        "organizationId",
+        "product",
+        "storeFrom",
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "transformation.update": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "amountUnit": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "assemblyChartWriteoff": {
+          "type": "boolean"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/TransformationDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "product": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storeFrom": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storeTo": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "amountUnit",
+        "date",
+        "documentId",
+        "items",
+        "number",
+        "organizationId",
+        "product",
+        "storeFrom",
+        "storeTo"
+      ],
+      "type": "object"
+    },
+    "writeoff.create": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/WriteoffDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "expenseAccount",
+        "items",
+        "organizationId",
+        "storageFrom"
+      ],
+      "type": "object"
+    },
+    "writeoff.update": {
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "conception": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "documentId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "expenseAccount": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "isAutomatic": {
+          "type": "boolean"
+        },
+        "isEditable": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/WriteoffDocumentCreateItem"
+          },
+          "type": "array"
+        },
+        "number": {
+          "type": "string"
+        },
+        "organizationId": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "storageFrom": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "documentId",
+        "expenseAccount",
+        "items",
+        "number",
+        "organizationId",
+        "storageFrom"
+      ],
+      "type": "object"
+    }
+  },
+  "resources": {
+    "account": {
+      "base": "/api/finance/v1/account",
+      "collection": "accounts",
+      "create": "account.create",
+      "get": "internal_finance_accounts.AccountGetRequest",
+      "id": "id",
+      "list": "internal_finance_accounts.AccountListRequest",
+      "update": "account.update"
+    },
+    "cash_flow_category": {
+      "base": "/api/finance/v1/cash-flow-category",
+      "collection": "cashFlowCategories",
+      "create": "cash_flow_category.create",
+      "get": "internal_finance_cashflowcategories.CashFlowCategoryGetRequest",
+      "id": "id",
+      "list": "internal_finance_cashflowcategories.CashFlowCategoryListRequest",
+      "update": "cash_flow_category.update"
+    },
+    "counterparty": {
+      "base": "/api/inventory/v1/counteragents",
+      "collection": "counteragents",
+      "create": "counterparty.create",
+      "get": "GetCounteragentRequest",
+      "id": "counteragentId",
+      "list": "GetCounteragentsRequest",
+      "update": "counterparty.update"
+    },
+    "disassembly": {
+      "base": "/api/inventory/v2/disassemble_document",
+      "collection": null,
+      "create": "disassembly.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "disassembly.update"
+    },
+    "incoming_invoice": {
+      "base": "/api/inventory/v1/incoming_invoice",
+      "collection": null,
+      "create": "incoming_invoice.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "incoming_invoice.update"
+    },
+    "incoming_return": {
+      "base": "/api/inventory/v1/incoming_returned_invoice",
+      "collection": null,
+      "create": "incoming_return.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "incoming_return.update"
+    },
+    "incoming_service": {
+      "base": "/api/finance/v1/incoming_service",
+      "collection": null,
+      "create": "incoming_service.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "incoming_service.update"
+    },
+    "internal_price_list": {
+      "base": "/api/inventory/v1/independent-price-list",
+      "collection": "items",
+      "create": "internal_price_list.create",
+      "id": "priceListId",
+      "list": "IndependentPriceListListRequest",
+      "update": "internal_price_list.update"
+    },
+    "internal_transfer": {
+      "base": "/api/inventory/v2/internal_transfer",
+      "collection": null,
+      "create": "internal_transfer.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "internal_transfer.update"
+    },
+    "inventory_count": {
+      "base": "/api/inventory/v1/incoming_inventory",
+      "collection": null,
+      "create": "inventory_count.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "inventory_count.update"
+    },
+    "outgoing_invoice": {
+      "base": "/api/inventory/v1/outgoing_invoice",
+      "collection": null,
+      "create": "outgoing_invoice.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "outgoing_invoice.update"
+    },
+    "outgoing_service": {
+      "base": "/api/finance/v1/outgoing_service",
+      "collection": null,
+      "create": "outgoing_service.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "outgoing_service.update"
+    },
+    "product": {
+      "base": "/api/nomenclature/v2/product",
+      "collection": "items",
+      "create": "product.create",
+      "id": "productId",
+      "list": "NomenclatureProductListRequest",
+      "update": "product.update"
+    },
+    "product_category": {
+      "base": "/api/nomenclature/v1/category",
+      "collection": "items",
+      "create": "product_category.create",
+      "id": "id",
+      "list": "NomenclatureCategoryListRequest",
+      "update": "product_category.update"
+    },
+    "product_group": {
+      "base": "/api/nomenclature/v2/group",
+      "collection": "groups",
+      "create": "product_group.create",
+      "id": "groupId",
+      "list": "NomenclatureGroupListRequest",
+      "update": "product_group.update"
+    },
+    "product_scale": {
+      "base": "/api/nomenclature/v1/product-scale",
+      "collection": "items",
+      "create": "product_scale.create",
+      "get": "ProductSizeGetRequest",
+      "id": "id",
+      "list": "ProductSizeListRequest",
+      "update": "product_scale.update"
+    },
+    "production": {
+      "base": "/api/inventory/v2/production_document",
+      "collection": null,
+      "create": "production.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "production.update"
+    },
+    "recipe": {
+      "base": "/api/nomenclature/v3/assembly-chart",
+      "collection": "items",
+      "create": "recipe.create",
+      "get": "GetRequestV3",
+      "id": "id",
+      "list": "AssemblyChartListRequestV3",
+      "update": "recipe.update"
+    },
+    "sales_document": {
+      "base": "/api/inventory/v1/sales_document",
+      "collection": null,
+      "create": "sales_document.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "sales_document.update"
+    },
+    "substitution": {
+      "base": "/api/inventory/v2/substitution_record",
+      "collection": null,
+      "create": "substitution.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "substitution.update"
+    },
+    "supplier_price_list": {
+      "base": "/api/inventory/v1/counteragents/pricelist",
+      "collection": "items",
+      "create": "supplier_price_list.create",
+      "id": "priceListId",
+      "list": "GetPriceListRequest",
+      "update": "supplier_price_list.update"
+    },
+    "supplier_return": {
+      "base": "/api/inventory/v1/returned_invoice",
+      "collection": null,
+      "create": "supplier_return.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "supplier_return.update"
+    },
+    "transformation": {
+      "base": "/api/inventory/v1/transformation_document",
+      "collection": null,
+      "create": "transformation.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "transformation.update"
+    },
+    "writeoff": {
+      "base": "/api/inventory/v2/writeoff_document",
+      "collection": null,
+      "create": "writeoff.create",
+      "get": "GetByIDRequest",
+      "id": "documentId",
+      "list": "ListRequest",
+      "update": "writeoff.update"
+    }
+  },
+  "source": "https://api-ru.iiko.services/api-docs/docs"
+}
