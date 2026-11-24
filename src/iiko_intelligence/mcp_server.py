@@ -12,7 +12,7 @@ from pydantic import Field
 
 from . import __version__
 from . import cloud_mcp
-from .cloud_mcp import LIVE_READ, cloud_status, register_cloud_tools
+from .cloud_mcp import LIVE_READ, ReportBound, cloud_status, register_cloud_tools
 from .live_sales import LiveSales
 from .report_calendar import preset
 from .record_tools import register_record_tools
@@ -25,7 +25,8 @@ from .updates import start_checks, update_status, with_update_notice
 
 INSTRUCTIONS = (
     "For restaurant figures use live reports when Cloud is configured. For sales and document lists pass the same "
-    "preset for both bounds: today, yesterday, day_before_yesterday, this_week, last_week (Mon-Sun), this_month, "
+    "preset for both bounds. For «выручка за вчера» or «за фчера», call get_sales_summary with "
+    "date_from='yesterday' and date_to='yesterday'. The connector resolves the restaurant date. Supported presets: today, yesterday, day_before_yesterday, this_week, last_week (Mon-Sun), this_month, "
     "last_month, month_before_last, week_before_last, previous_month_to_date, previous_week_to_date, this_quarter, "
     "last_quarter, this_year, last_year, last_N_days or last_N_complete_days (1-366). Examples: last_7_days or "
     "last_30_days (include today), last_7_complete_days or last_30_complete_days (end yesterday). "
@@ -122,7 +123,7 @@ def use_live(source: SalesSource, department: str | None, *dates: str) -> bool:
                 "Optional department is an exact outlet name. Choose snapshot for an imported report.",
     annotations=LIVE_READ,
 )
-def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto",
+def get_sales_summary(date_from: ReportBound, date_to: ReportBound, source: SalesSource = "auto",
                       department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     if use_live(source, department, date_from, date_to):
         return cloud_mcp.live(lambda api: LiveSales(api, department, restaurant_timezone).summary(date_from, date_to))
@@ -136,7 +137,7 @@ def get_sales_summary(date_from: str, date_to: str, source: SalesSource = "auto"
                 "or inclusive YYYY-MM-DD dates. Live dish amounts must reconcile with the daily sales report.",
     annotations=LIVE_READ,
 )
-def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
+def get_top_dishes(date_from: ReportBound, date_to: ReportBound, limit: RowLimit = 10,
                    rank_by: Literal["sales", "quantity"] = "sales", source: SalesSource = "auto",
                    department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     if use_live(source, department, date_from, date_to):
@@ -148,7 +149,7 @@ def get_top_dishes(date_from: str, date_to: str, limit: RowLimit = 10,
 @server.tool(name="compare_sales_periods", annotations=LIVE_READ,
              description="Compare two inclusive periods from the configured Cloud or a requested snapshot. Show sales change and dishes with the "
                          "largest absolute contributions. Repeat each named period in its two bounds. Explain comparison_notes.")
-def compare_sales_periods(baseline_from: str, baseline_to: str, current_from: str, current_to: str,
+def compare_sales_periods(baseline_from: ReportBound, baseline_to: ReportBound, current_from: ReportBound, current_to: ReportBound,
                           limit: RowLimit = 10, source: SalesSource = "auto",
                           department: str | None = None, restaurant_timezone: str | None = None) -> dict[str, Any]:
     dates = baseline_from, baseline_to, current_from, current_to

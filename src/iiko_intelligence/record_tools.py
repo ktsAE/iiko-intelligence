@@ -30,10 +30,11 @@ def register_record_tools(server: MCPServer):
 
     @server.tool(annotations=LIVE_READ)
     def list_iiko_records(record_type: str, criteria: dict[str, Any] | None = None,
-                          limit: Limit = 50, offset: Offset = 0) -> dict[str, Any]:
+                          limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Read an existing iiko table or register. Discover criteria using describe_iiko_records(action='list').
-        For warehouse document registers pass from and to in YYYY-MM-DD, up to 31 days. Follow next_offset."""
-        return live(lambda api: records.list_records(api, record_type, criteria or {}, limit, offset))
+        For documents pass up to 31 days. «Накладные за вчера»: record_type='incoming_invoice',
+        criteria={'from': 'yesterday', 'to': 'yesterday'}. Follow next_page_arguments when supplied."""
+        return live(lambda api: records.list_records(api, record_type, criteria or {}, limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
     def get_iiko_record(record_type: str, record_id: UUID, selector: dict[str, str] | None = None) -> dict[str, Any]:

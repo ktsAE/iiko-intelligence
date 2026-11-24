@@ -39,7 +39,12 @@ class MCPDefinitionTest(unittest.TestCase):
 
     def test_tool_schemas_are_bounded(self) -> None:
         tools = {tool.name: tool for tool in asyncio.run(server.list_tools())}
+        self.assertTrue(all(tool.description for tool in tools.values()))
         sales_schema = tools["get_sales_summary"].input_schema
+        for key in ("date_from", "date_to"):
+            field = sales_schema["properties"][key]
+            self.assertIn("за вчера", field["description"])
+            self.assertIn("yesterday", field["examples"])
         self.assertEqual(set(sales_schema["required"]), {"date_from", "date_to"})
         self.assertNotIn("path", str(sales_schema).lower())
         self.assertNotIn("method", str(sales_schema).lower())

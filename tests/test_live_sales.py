@@ -261,19 +261,20 @@ class Protocol(IsolatedAsyncioTestCase):
                 "iiko_intelligence.cloud_mcp.CloudReports", side_effect=lambda profile: upstream.api()):
             async with Client(server) as client:
                 results = []
-                for label in ("вчера", "yesterday", "2026-11-22"):
+                labels = ("вчера", "за вчера", "за фчера", "yesterday", "2026-11-22")
+                for label in labels:
                     reply = await client.call_tool("get_sales_summary", {"source": "live", "date_from": label, "date_to": label})
                     self.assertFalse(reply.is_error)
                     results.append(reply.structured_content)
                 requests = [body for path, body in upstream.calls if path == s.REPORT]
-                self.assertEqual(len(requests), 3)
-                self.assertEqual(requests, [requests[0]] * 3)
+                self.assertEqual(len(requests), len(labels))
+                self.assertEqual(requests, [requests[0]] * len(labels))
                 self.assertEqual(results[0]["period"], {"from": "2026-11-22", "to": "2026-11-22", "period_type": "CUSTOM",
                                  "requested_period": "YESTERDAY", "restaurant_timezone": "Europe/Moscow",
                                  "days_with_rows": 1, "calendar_days": 1})
-                self.assertEqual([r["totals"] for r in results], [results[0]["totals"]] * 3)
+                self.assertEqual([r["totals"] for r in results], [results[0]["totals"]] * len(labels))
                 self.assertEqual(results[0]["totals"]["sales_after_discounts"], "40.00")
-                self.assertEqual(sum(path == paths.TERMINAL_GROUPS for path, _ in upstream.calls), 2)
+                self.assertEqual(sum(path == paths.TERMINAL_GROUPS for path, _ in upstream.calls), len(labels) - 1)
 
     async def test_online_answer_denial_and_missing_connection(self):
         upstream = Restaurant()

@@ -26,6 +26,14 @@ GroupFields = Annotated[list[FieldName], Field(max_length=16)]
 AmountFields = Annotated[list[FieldName], Field(min_length=1, max_length=8)]
 FilterValues = Annotated[list[Annotated[str, Field(min_length=1, max_length=256)]], Field(min_length=1, max_length=100)]
 SnapshotId = Annotated[str, Field(pattern="^[a-f0-9]{64}$")]
+ReportBound = Annotated[str, Field(
+    description="Включительная граница периода. Для «за вчера» или «за фчера» передай yesterday "
+                "в обеих границах. Для прошлой недели — last_week в обеих. Можно указать точную дату.",
+    examples=["yesterday", "last_week", "2026-11-23"])]
+AccountingDay = Annotated[str, Field(description="Один учётный день ресторана, например yesterday для «вчера».",
+                                     examples=["yesterday", "2026-11-23"])]
+BalanceTime = Annotated[str, Field(description="Момент расчёта. Для «на конец вчерашнего дня» передай end_of_yesterday.",
+                                   examples=["now", "end_of_yesterday", "2026-11-23T18:00:00+03:00"])]
 Kind = Literal["stocktake", "invoice", "writeoff"]
 
 
@@ -69,7 +77,7 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: transaction_reports.list_fields(api, query, limit, offset))
 
     @server.tool(annotations=LIVE_READ)
-    def get_transaction_report(date_from: str, date_to: str, group_fields: GroupFields, amount_fields: AmountFields,
+    def get_transaction_report(date_from: ReportBound, date_to: ReportBound, group_fields: GroupFields, amount_fields: AmountFields,
                                filters: dict[FieldName, FilterValues] | None = None, restaurant_timezone: str | None = None,
                                limit: Limit = 50, offset: Offset = 0, snapshot_id: SnapshotId | None = None) -> dict[str, Any]:
         """Read TRANSACTIONS OLAP for up to 31 inclusive dates. Use actual metadata field names and exact filter values.
@@ -84,7 +92,7 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: transaction_reports.list_presets(api, query, limit, offset))
 
     @server.tool(annotations=LIVE_READ)
-    def get_saved_iiko_report(preset_id: FieldName, date_from: str, date_to: str, restaurant_timezone: str | None = None,
+    def get_saved_iiko_report(preset_id: FieldName, date_from: ReportBound, date_to: ReportBound, restaurant_timezone: str | None = None,
                               limit: Limit = 50, offset: Offset = 0, snapshot_id: SnapshotId | None = None) -> dict[str, Any]:
         """Read data rows of a known saved report for up to 31 inclusive dates. Use the ID returned by the preset list.
         Presets may group multiple postings. Follow next_page_arguments. Never add intermediate or grand totals to detail."""
@@ -115,19 +123,19 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: api.stores(limit, offset))
 
     @server.tool(annotations=LIVE_READ)
-    def get_recipe_card(product_id: UUID, as_of: str, limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
+    def get_recipe_card(product_id: UUID, as_of: AccountingDay, limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Read the effective технологическая карта on a date, today, yesterday or day_before_yesterday. Return yield, preparation and top-level
         ingredient quantities, including size and department applicability. Use next_offset for additional rows."""
         return live(lambda api: api.recipe(str(product_id), as_of, limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_item_cost(product_id: UUID, store_id: UUID, as_of: str, quantity: Quantity = 1, restaurant_timezone: str | None = None) -> dict[str, Any]:
+    def get_item_cost(product_id: UUID, store_id: UUID, as_of: BalanceTime, quantity: Quantity = 1, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Read warehouse accounting себестоимость for this quantity at now, end_of_yesterday or an ISO timestamp with UTC offset.
         Identify the store, quantity and estimated flag. A missing price is unavailable."""
         return live(lambda api: api.cost(str(product_id), str(store_id), as_of, quantity, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_recipe_cost(product_id: UUID, store_id: UUID, as_of: str, product_size_id: UUID | None = None,
+    def get_recipe_cost(product_id: UUID, store_id: UUID, as_of: BalanceTime, product_size_id: UUID | None = None,
                         limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Calculate recipe ingredient cost at a single warehouse using iiko's flattened ingredients and unit costs.
         Use now, end_of_yesterday or an ISO timestamp in the restaurant's timezone. Returns batch yield and cost per output unit only
@@ -135,14 +143,14 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: api.recipe_cost(str(product_id), str(store_id), as_of, optional_id(product_size_id), limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_live_stock(as_of: str, store_id: UUID | None = None, product_id: UUID | None = None,
+    def get_live_stock(as_of: BalanceTime, store_id: UUID | None = None, product_id: UUID | None = None,
                        limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """Get товарные остатки at now, end_of_yesterday or an ISO timestamp with UTC offset. Returns nonzero quantity or value rows,
         product and warehouse names, units and costs. Use next_offset before drawing full-report conclusions."""
         return live(lambda api: api.stock(as_of, optional_id(store_id), optional_id(product_id), limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_inventory_counts(date_from: str, date_to: str, store_id: UUID | None = None,
+    def get_inventory_counts(date_from: ReportBound, date_to: ReportBound, store_id: UUID | None = None,
                              limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """List инвентаризации in up to 366 days. Show document status, surplus/shortage values when supplied.
         Repeat a named period such as last_month in both dates or supply inclusive dates. Follow next_offset for more.
@@ -150,7 +158,7 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: api.documents("stocktake", date_from, date_to, optional_id(store_id), limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_incoming_invoices(date_from: str, date_to: str, store_id: UUID | None = None,
+    def get_incoming_invoices(date_from: ReportBound, date_to: ReportBound, store_id: UUID | None = None,
                               limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """List приходные накладные in up to 366 days. Status and document totals come from iiko.
         Repeat a named period such as last_month in both dates or supply inclusive dates. Follow next_offset for more.
@@ -158,7 +166,7 @@ def register_cloud_tools(server: MCPServer) -> None:
         return live(lambda api: api.documents("invoice", date_from, date_to, optional_id(store_id), limit, offset, restaurant_timezone))
 
     @server.tool(annotations=LIVE_READ)
-    def get_writeoff_acts(date_from: str, date_to: str, store_id: UUID | None = None,
+    def get_writeoff_acts(date_from: ReportBound, date_to: ReportBound, store_id: UUID | None = None,
                           limit: Limit = 50, offset: Offset = 0, restaurant_timezone: str | None = None) -> dict[str, Any]:
         """List акты списания in up to 366 days with warehouse, status and document totals.
         Repeat a named period such as last_month in both dates or supply inclusive dates. Follow next_offset for more.

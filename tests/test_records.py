@@ -2,6 +2,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from decimal import Decimal
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import IsolatedAsyncioTestCase, TestCase
@@ -11,6 +12,7 @@ from uuid import UUID
 from mcp import Client
 
 from iiko_intelligence import records
+from iiko_intelligence.report_calendar import RestaurantCalendar
 from iiko_intelligence.cloud_profile import Profile
 from iiko_intelligence.cloud_sales import CloudHTTPError, _post, write_record
 from iiko_intelligence.mcp_server import server
@@ -32,6 +34,9 @@ class Restaurant:
         self.record = deepcopy(HEADER)
         self.writes = []
         self.error = None
+
+    def calendar(self, zone):
+        return RestaurantCalendar(lambda: ["Europe/Moscow"], zone, datetime(2026, 10, 10, 22, tzinfo=timezone.utc))
 
     def read(self, path, body):
         if path.endswith("/get"):
@@ -93,6 +98,16 @@ class TestRecords(IsolatedAsyncioTestCase):
         stale = await self.call("update_iiko_record", **dict(edit, request_id=OTHER))
         self.assertIn("changed", stale["reason"])
         self.assertEqual(len(self.api.writes), 1)
+
+    async def test_yesterday_document_list_pins_dates_for_next_page(self):
+        with patch.object(self.api, "read", return_value=[HEADER, dict(HEADER, documentId=OTHER)]) as read:
+            out = await self.call("list_iiko_records", record_type="incoming_invoice",
+                                  criteria={"from": "за фчера", "to": "yesterday", "storeIds": [STORE]}, limit=1)
+            self.assertEqual((out["date_from"], out["date_to"]), (DATE, DATE))
+            self.assertEqual(read.call_args.args[1], {"from": DATE, "to": DATE, "storeIds": [STORE], "organizationId": ORG})
+            following = out["next_page_arguments"]
+            self.assertEqual(following["criteria"], {"from": DATE, "to": DATE, "storeIds": [STORE]})
+            self.assertEqual((await self.call("list_iiko_records", **following))["next_offset"], None)
 
     async def test_create_idempotency_scope_and_unknown_delivery(self):
         values = {"counteragent": SUPPLIER, "date": DATE, "items": [{"num": 1, "amount": 1, "product": ITEM, "store": STORE}]}

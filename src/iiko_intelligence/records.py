@@ -73,7 +73,7 @@ def scoped(api, entry, action, values):
     return result
 
 
-def list_records(api, kind, criteria, limit, offset):
+def list_records(api, kind, criteria, limit, offset, restaurant_timezone=None):
     entry = resource(kind)
     args = dict(criteria)
     props = DEFINITIONS[entry["list"]]["properties"]
@@ -83,9 +83,13 @@ def list_records(api, kind, criteria, limit, offset):
     if paginated:
         args.update(limit=limit, offset=offset)
     if entry["id"] == "documentId":
-        start, end = date.fromisoformat(args.get("from", "")), date.fromisoformat(args.get("to", ""))
-        if not 0 <= (end - start).days <= 30:
+        if not all(isinstance(args.get(key), str) for key in ("from", "to")):
+            raise ValueError("Supply criteria.from and criteria.to, e.g. yesterday for both.")
+        period = api.calendar(restaurant_timezone).resolve(args["from"], args["to"])
+        if len(period.windows) != 1:
             raise ValueError("List documents for an ordered date range of up to 31 days.")
+        start, end = period.windows[0].start, period.windows[0].end
+        args.update({"from": start.isoformat(), "to": end.isoformat()})
     result = api.read(entry["base"] + "/list", scoped(api, entry, "list", args))
     key = entry["collection"]
     rows = _objects(object_result(result).get(key) if key else result, "record list")
@@ -100,6 +104,11 @@ def list_records(api, kind, criteria, limit, offset):
         result_page = page(rows, offset, limit)
     if kind == "internal_price_list":
         result_page["header"] = {k: result[k] for k in ("priceListId", "dateFrom", "dateTo", "revision") if k in result}
+    if entry["id"] == "documentId":
+        result_page.update(date_from=args["from"], date_to=args["to"])
+        if result_page["next_offset"] is not None:
+            result_page["next_page_arguments"] = {"record_type": kind, "criteria": {**criteria, "from": args["from"], "to": args["to"]},
+                                                  "limit": limit, "offset": result_page["next_offset"]}
     return {"record_type": kind, **result_page}
 
 

@@ -1,6 +1,6 @@
 # What the manager can ask
 
-v0.7.0 exposes 28 MCP tools (26 reads, 2 writes) for one organization. A configured profile allows the connector to try each live report. The restaurant’s iiko permissions determine which calls succeed.
+v0.7.1 exposes 28 MCP tools (26 reads, 2 writes) for one organization. A configured profile allows the connector to try each live report. The restaurant’s iiko permissions determine which calls succeed.
 
 | Question | Offline reports | Live MCP |
 | --- | --- | --- |

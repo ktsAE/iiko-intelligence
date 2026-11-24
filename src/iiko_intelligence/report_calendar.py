@@ -49,7 +49,7 @@ def windows(first: str, last: str) -> list[Window]:
 
 # Preset names are part of the MCP interface. A bare "week" or "month" is ambiguous.
 ALIASES = {
-    "today": ("сегодня",), "yesterday": ("вчера",), "day_before_yesterday": ("позавчера",),
+    "today": ("сегодня",), "yesterday": ("вчера", "фчера", "вчерашний день"), "day_before_yesterday": ("позавчера", "позафчера"),
     "this_week": ("эта неделя", "эту неделю", "текущая неделя", "текущую неделю", "week to date"),
     "last_week": ("прошлая неделя", "прошлую неделю", "предыдущая неделя", "предыдущую неделю", "previous week"),
     "week_before_last": ("позапрошлая неделя", "позапрошлую неделю"),
